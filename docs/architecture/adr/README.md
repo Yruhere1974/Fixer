@@ -24,3 +24,4 @@ Trivial, easily-reversible choices don't need one.
 | # | Title | Status |
 |---|-------|--------|
 | [0001](./0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
+| [0002](./0002-fixer-operations-platform-stack.md) | Stack for the Fixer Operations Platform | Accepted |

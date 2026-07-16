@@ -1,0 +1,417 @@
+// Fixer Operations Platform — data model.
+// Built to Documents/fixer-software-project-plan.md (§5 roles, §6 capabilities, §7 data).
+// Slice 1: consent/audit/retention spine. Slice 2: intake -> action-plan journey.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// People and roles the software must support (plan §5). Access is assignment-scoped.
+enum Role {
+  FOUNDER
+  LEAD_NAVIGATOR
+  NAVIGATOR
+  ASSISTANT
+  PRIVACY_LEAD
+  REVIEWER
+  BOOKKEEPER
+  EXTERNAL_ADVISOR
+}
+
+enum ClientStatus {
+  PROSPECT
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+/// Communication channels; sensitive detail must stay off low-assurance channels (plan §8.5).
+enum CommunicationChannel {
+  SECURE_PORTAL
+  EMAIL
+  PHONE
+  SMS
+  IN_PERSON
+  MAIL
+}
+
+/// Categories of information a disclosure carries and a consent covers.
+/// Ordered loosely by sensitivity; HEALTH_SENSITIVE+ get the strongest handling (plan §7.1).
+enum InfoCategory {
+  CONTACT_DETAILS
+  SCHEDULING
+  PROVIDER_COORDINATION
+  GENERAL_WELLBEING
+  ACCESSIBILITY
+  FINANCIAL
+  HEALTH_SENSITIVE
+  SAFEGUARDING
+  IDENTITY_DOCUMENT
+}
+
+/// Separate permissions the plan requires be tracked individually (plan §6.3).
+enum ConsentType {
+  SERVICE
+  CONTACT_PROVIDER
+  BOOK_APPOINTMENT
+  RECEIVE_FROM_PROVIDER
+  FAMILY_UPDATE
+  ATTEND_APPOINTMENT
+  HANDLE_DOCUMENTS
+  TESTIMONIAL
+  MARKETING
+}
+
+enum ConsentMethod {
+  WRITTEN_SIGNATURE
+  ELECTRONIC_ACCEPTANCE
+  VERBAL_DOCUMENTED
+  EMAIL_CONFIRMATION
+}
+
+enum FitDecision {
+  PENDING
+  IN_SCOPE
+  OUT_OF_SCOPE
+}
+
+/// Outcome of the scope + safety screen (plan §6.2, workflow.md).
+enum ScreenOutcome {
+  PROCEED
+  REFERRED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  AWAITING_APPROVAL
+  DONE
+}
+
+enum ApprovalStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Retention categories (plan §7.1, §8.8). "Keep everything forever" is never the default.
+enum RetentionCategory {
+  SHORT_TERM
+  STANDARD_SERVICE
+  FINANCIAL
+  INCIDENT_LEGAL
+  CONSENT_RECORD
+}
+
+/// Audit actions — every important mutation/disclosure is attributable (plan §3.5, §6.10).
+enum AuditAction {
+  CREATE
+  UPDATE
+  APPROVE
+  REJECT
+  DISCLOSE
+  DISCLOSURE_BLOCKED
+  WITHDRAW_CONSENT
+  DOWNLOAD
+  DELETE
+  SCREEN
+}
+
+// ---------------------------------------------------------------------------
+// People
+// ---------------------------------------------------------------------------
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedClients Client[]         @relation("assignedNavigator")
+  handledInquiries Inquiry[]
+  screens         ScreeningRecord[]
+  recordedConsents ConsentRecord[] @relation("consentRecorder")
+  withdrawnConsents ConsentRecord[] @relation("consentWithdrawer")
+  sentDisclosures Disclosure[]
+  ownedItems      ActionItem[]     @relation("itemOwner")
+  reviewedItems   ActionItem[]     @relation("itemReviewer")
+  auditEvents     AuditEvent[]
+
+  @@index([role])
+}
+
+// ---------------------------------------------------------------------------
+// Client (the spine) + journey records
+// ---------------------------------------------------------------------------
+
+model Client {
+  id                 String    @id @default(cuid())
+  displayName        String
+  contactEmail       String?
+  contactPhone       String?
+  preferredChannel   CommunicationChannel?
+  status             ClientStatus @default(PROSPECT)
+
+  assignedNavigator   User?    @relation("assignedNavigator", fields: [assignedNavigatorId], references: [id])
+  assignedNavigatorId String?
+
+  // Retention & legal hold (plan §6.14, §8.8).
+  retentionCategory  RetentionCategory?
+  retentionReviewDate DateTime?
+  legalHold          Boolean  @default(false)
+
+  closedAt   DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  inquiry          Inquiry?
+  screening        ScreeningRecord?
+  agreement        ServiceAgreement?
+  intake           IntakeRecord?
+  actionPlan       ActionPlan?
+  consents         ConsentRecord[]
+  approvedContacts ApprovedContact[]
+  disclosures      Disclosure[]
+  auditEvents      AuditEvent[]
+
+  @@index([status])
+  @@index([assignedNavigatorId])
+}
+
+/// Inquiry & fit (plan §6.1). General reason only — no unnecessary health detail.
+model Inquiry {
+  id             String   @id @default(cuid())
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId       String   @unique
+  source         String
+  generalReason  String
+  locationEligible Boolean @default(true)
+  urgencyNote    String?
+  fitDecision    FitDecision @default(PENDING)
+  fitReason      String?
+  packageDiscussed String?
+  followUpDate   DateTime?
+  becameClient   Boolean  @default(false)
+  notProceedReason String?
+  referralOutcome String?
+  handledBy      User?    @relation(fields: [handledById], references: [id])
+  handledById    String?
+  createdAt      DateTime @default(now())
+}
+
+/// Scope + safety screen (plan §6.2, workflow.md). Never diagnoses. Emergencies bypass sales.
+model ScreeningRecord {
+  id             String   @id @default(cuid())
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId       String   @unique
+  withinScope    Boolean
+  immediateConcern Boolean
+  resourceProvided String?   // e.g. "9-1-1", "9-8-8", "8-1-1", "clinician"
+  objectiveFacts String
+  actionTaken    String
+  outcome        ScreenOutcome
+  screenedBy     User?    @relation(fields: [screenedById], references: [id])
+  screenedById   String?
+  screenedAt     DateTime @default(now())
+}
+
+/// Service agreement + fee/response-time confirmation (plan §6.3, workflow onboarding).
+model ServiceAgreement {
+  id               String   @id @default(cuid())
+  client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId         String   @unique
+  servicePackage   String
+  versionAccepted  String
+  feesConfirmed    Boolean  @default(false)
+  responseTimesConfirmed Boolean @default(false)
+  method           ConsentMethod
+  signedAt         DateTime?
+  createdAt        DateTime @default(now())
+}
+
+/// Structured intake (plan §6.4). Leave irrelevant areas blank; collect less.
+model IntakeRecord {
+  id                    String   @id @default(cuid())
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId              String   @unique
+  preferredName         String?
+  pronouns              String?
+  language              String?
+  communicationMethod   CommunicationChannel?
+  accessibilityNeeds    String?
+  serviceObjective      String
+  topPriorities         String?
+  deadlines             String?
+  budgetRange           String?
+  expenseLimit          Decimal? @db.Decimal(10, 2)
+  existingProviders     String?
+  transportationConstraints String?
+  culturalPreferences   String?
+  knownRisks            String?
+  doNotShare            String?   // information the client does not want shared (plan §6.4)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Consent / authority (plan §6.3) — the enforcement heart of the system
+// ---------------------------------------------------------------------------
+
+model ApprovedContact {
+  id           String   @id @default(cuid())
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId     String
+  name         String
+  relationship String
+  permittedInfo InfoCategory[]        // info-sharing limits (plan §6.4)
+  channels     CommunicationChannel[]
+  createdAt    DateTime @default(now())
+
+  consents     ConsentRecord[] @relation("consentRecipients")
+  disclosures  Disclosure[]
+
+  @@index([clientId])
+}
+
+/// Consent is a managed record, not a checkbox (plan §6.3): scope, expiry, withdrawal.
+model ConsentRecord {
+  id            String       @id @default(cuid())
+  client        Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId      String
+  type          ConsentType
+  grantedByName String                      // person providing consent (client or representative)
+  coveredInfo   InfoCategory[]              // what information/actions are covered
+  purpose       String
+  excludedInfo  String?                     // information explicitly excluded
+  channels      CommunicationChannel[]      // permitted communication channels
+  effectiveDate DateTime     @default(now())
+  expiryDate    DateTime?
+  method        ConsentMethod
+  versionAccepted String
+  withdrawnAt   DateTime?
+  withdrawnBy   User?        @relation("consentWithdrawer", fields: [withdrawnById], references: [id])
+  withdrawnById String?
+  recordedBy    User?        @relation("consentRecorder", fields: [recordedById], references: [id])
+  recordedById  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  recipients    ApprovedContact[] @relation("consentRecipients")
+  disclosures   Disclosure[]
+
+  @@index([clientId, type])
+}
+
+/// Every disclosure — permitted or blocked — is recorded for the audit trail (plan §6.10).
+model Disclosure {
+  id             String   @id @default(cuid())
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId       String
+  recipientName  String
+  recipientContact ApprovedContact? @relation(fields: [recipientContactId], references: [id])
+  recipientContactId String?
+  category       InfoCategory
+  channel        CommunicationChannel
+  infoSummary    String
+  purpose        String
+  consent        ConsentRecord? @relation(fields: [consentId], references: [id])
+  consentId      String?
+  allowed        Boolean            // false = attempted but blocked by the guard
+  blockedReason  String?
+  sender         User?    @relation(fields: [senderId], references: [id])
+  senderId       String?
+  followUp       String?
+  disclosedAt    DateTime @default(now())
+
+  @@index([clientId])
+}
+
+// ---------------------------------------------------------------------------
+// Action plan (plan §6.5, workflow.md) — slice 2 destination
+// ---------------------------------------------------------------------------
+
+model ActionPlan {
+  id            String   @id @default(cuid())
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId      String   @unique
+  desiredOutcome String
+  version       Int      @default(1)
+  clientApprovedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items         ActionItem[]
+}
+
+model ActionItem {
+  id             String   @id @default(cuid())
+  plan           ActionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId         String
+  title          String
+  desiredOutcome String?
+  priority       Priority @default(MEDIUM)
+  owner          User?    @relation("itemOwner", fields: [ownerId], references: [id])
+  ownerId        String?
+  reviewer       User?    @relation("itemReviewer", fields: [reviewerId], references: [id])
+  reviewerId     String?
+  dueDate        DateTime?
+  status         ActionStatus   @default(NOT_STARTED)
+  dependency     ActionItem?    @relation("itemDependency", fields: [dependencyId], references: [id])
+  dependencyId   String?
+  dependents     ActionItem[]   @relation("itemDependency")
+  estimatedCost  Decimal? @db.Decimal(10, 2)
+  approvedCost   Decimal? @db.Decimal(10, 2)
+  approvalStatus ApprovalStatus @default(NOT_REQUIRED)
+  backupOption   String?
+  evidence       String?              // required before an item may be marked DONE (plan §3.9)
+  nextAction     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([planId])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Audit (plan §3.5, §6.10) — reconstructable history of who did what, when
+// ---------------------------------------------------------------------------
+
+model AuditEvent {
+  id         String      @id @default(cuid())
+  actor      User?       @relation(fields: [actorId], references: [id])
+  actorId    String?
+  action     AuditAction
+  entityType String
+  entityId   String?
+  client     Client?     @relation(fields: [clientId], references: [id])
+  clientId   String?
+  summary    String
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+
+  @@index([clientId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

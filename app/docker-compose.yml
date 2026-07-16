@@ -1,0 +1,18 @@
+# Local development database only.
+# Production must run in a Canadian region for data residency (see ADR 0002, plan §7.2/§8.6).
+services:
+  db:
+    image: postgres:16
+    container_name: fixer-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fixer
+      POSTGRES_PASSWORD: fixer_local_dev
+      POSTGRES_DB: fixer
+    ports:
+      - "5434:5432"
+    volumes:
+      - fixer-db-data:/var/lib/postgresql/data
+
+volumes:
+  fixer-db-data:

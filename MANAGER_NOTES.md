@@ -21,10 +21,28 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
-- **YYYY-MM-DD — [Feature/Fix Name]:** [Detailed summary of what was "ratcheted" into the repo. Include specific technical changes, version bumps, and verification steps.]
-  - **Verification:** [How the change was tested and confirmed.]
-  - **Version:** [Tag or version number associated with this click.]
+- **2026-07-16 — Fixer Operations Platform, slices 1 & 2:** Began building the
+  custom application (`app/`) from `Documents/fixer-software-project-plan.md`.
+  Stack chosen and recorded as **ADR 0002** (TypeScript + Next.js 16 + Postgres
+  via Prisma 7). **Slice 1 (consent/audit/retention spine):** full data model for
+  §5 roles / §6 capabilities / §7 data; a consent guard (`evaluateDisclosure` /
+  `recordDisclosure`) that permits or refuses any share and records both outcomes;
+  an audit event on every mutation; retention category + legal-hold fields.
+  **Slice 2 (intake → action-plan journey per `workflow.md`):** navigator dashboard
+  with the daily exception view, and a client page (journey record, live consent
+  status, evidence-gated action items, a live family-update guard tester, disclosure
+  history, and audit trail). Local dev DB via `docker-compose` (Postgres on 5434);
+  fictional data only.
+  - **Verification:** `npm run typecheck` clean, `npm run lint` clean, `npm run build`
+    passes (3 routes). Seed proves the guard (scheduling→family→email allowed;
+    health-sensitive blocked; SMS channel blocked). Both routes return HTTP 200 with
+    the blocked attempts visible in the UI and audit log.
+  - **Version:** Committed on `develop` (not yet tagged to `main` — pilot-readiness
+    gates in the plan remain open).
 
-**Handoff:** The local business and planning content is now versioned with the
-Fixer repository. Replace the remaining template tasks as implementation work is
-prioritized.
+**Handoff:** App scaffold and the consent/audit spine + client-journey slice are in
+`app/` on `develop`. Next: reskin the workspace to the **Serene Network** design
+system in `design/` (currently generic Tailwind). Still open before any `main` tag:
+real authentication + §5 role enforcement, consent creation/withdrawal UI, and the
+plan's Phase-5 fictional-client test matrix. Run the app with `docker compose up -d`
+then `npm run dev` (seed with `npm run db:seed`).
