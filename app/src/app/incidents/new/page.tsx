@@ -15,7 +15,7 @@ export default async function NewIncidentPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <Link href="/" className="text-sm text-primary hover:underline">← Workspace</Link>
+        <Link href="/workspace" className="text-sm text-primary hover:underline">← Workspace</Link>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight">Report an incident</h1>
         <p className="mt-1 text-sm text-on-surface-variant">
           Complaints, incidents, near misses, and privacy events (§6.12, §17.5). Restricted record — do not

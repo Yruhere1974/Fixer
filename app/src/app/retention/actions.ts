@@ -56,5 +56,5 @@ export async function destroyClientRecord(formData: FormData) {
   });
 
   revalidatePath("/retention");
-  revalidatePath("/");
+  revalidatePath("/workspace");
 }

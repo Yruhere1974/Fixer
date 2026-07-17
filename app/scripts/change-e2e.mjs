@@ -15,7 +15,7 @@ async function openEditor(label) {
 await page.goto(`${base}/login`, { waitUntil: "networkidle" });
 await page.fill('input[name="email"]', "founder@fixer.local");
 await page.fill('input[name="password"]', "password123");
-await Promise.all([page.waitForURL(`${base}/`), page.click('button[type="submit"]')]);
+await Promise.all([page.waitForURL(`${base}/workspace`), page.click('button[type="submit"]')]);
 
 // Open the seeded client directly
 await page.goto(`${base}/clients/${CLIENT_ID}`, { waitUntil: "networkidle" });

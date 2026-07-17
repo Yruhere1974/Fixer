@@ -86,7 +86,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-8">
       <div>
-        <Link href="/" className="text-sm text-primary hover:underline">← Workspace</Link>
+        <Link href="/workspace" className="text-sm text-primary hover:underline">← Workspace</Link>
         <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">Client</p>
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-semibold tracking-tight text-on-surface">{client.displayName}</h1>

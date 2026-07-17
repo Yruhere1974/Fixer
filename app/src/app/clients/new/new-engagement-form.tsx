@@ -74,7 +74,7 @@ export function NewEngagementForm() {
 
       <div className="flex items-center gap-3">
         <SubmitButton pendingLabel="Creating…">Create engagement</SubmitButton>
-        <Link href="/" className="text-sm text-on-surface-variant hover:underline">Cancel</Link>
+        <Link href="/workspace" className="text-sm text-on-surface-variant hover:underline">Cancel</Link>
       </div>
     </form>
   );

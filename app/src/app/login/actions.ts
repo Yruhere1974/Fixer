@@ -31,7 +31,7 @@ export async function login(_prev: LoginState | null, formData: FormData): Promi
     summary: `${user.name} signed in.`,
   });
 
-  redirect("/");
+  redirect("/workspace");
 }
 
 export async function logout() {

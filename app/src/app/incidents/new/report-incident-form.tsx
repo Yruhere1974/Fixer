@@ -55,7 +55,7 @@ export function ReportIncidentForm({ clients }: { clients: { id: string; display
       <FormError message={state?.error} />
       <div className="flex items-center gap-3">
         <SubmitButton variant="danger" pendingLabel="Reporting…">Report</SubmitButton>
-        <Link href="/" className="text-sm text-on-surface-variant hover:underline">Cancel</Link>
+        <Link href="/workspace" className="text-sm text-on-surface-variant hover:underline">Cancel</Link>
       </div>
       <p className="text-xs text-on-surface-variant/70">Incidents are reviewed within 48 hours (§17.5).</p>
     </form>

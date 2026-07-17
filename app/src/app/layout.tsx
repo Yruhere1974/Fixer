@@ -35,7 +35,7 @@ export default async function RootLayout({
         {user && (
           <header className="border-b border-outline-variant/60 bg-surface-lowest">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-              <Link href="/" className="flex items-center gap-2">
+              <Link href="/workspace" className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-on-primary">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 21s-7-4.35-7-10a7 7 0 0 1 14 0c0 5.65-7 10-7 10Z" />
@@ -47,7 +47,7 @@ export default async function RootLayout({
                 </span>
               </Link>
               <nav className="hidden gap-6 text-sm text-on-surface-variant sm:flex">
-                <Link href="/" className="hover:text-primary">Workspace</Link>
+                <Link href="/workspace" className="hover:text-primary">Workspace</Link>
                 <Link href="/providers" className="hover:text-primary">Providers</Link>
                 {canHandleIncidents(user.role) ? (
                   <Link href="/incidents" className="hover:text-primary">Incidents</Link>

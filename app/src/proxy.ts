@@ -14,7 +14,7 @@ export default function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
   if (hasSession && isPublic) {
-    return NextResponse.redirect(new URL("/", req.nextUrl));
+    return NextResponse.redirect(new URL("/workspace", req.nextUrl));
   }
   return NextResponse.next();
 }

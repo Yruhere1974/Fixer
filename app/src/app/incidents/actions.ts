@@ -58,7 +58,7 @@ export async function reportIncident(_prev: FormState | null, formData: FormData
   });
 
   // Reporters who cannot handle incidents return to the workspace; handlers go to the record.
-  redirect(canHandleIncidents(user.role) ? `/incidents/${incident.id}` : "/");
+  redirect(canHandleIncidents(user.role) ? `/incidents/${incident.id}` : "/workspace");
 }
 
 /** Record investigation + corrective plan (restricted). */
