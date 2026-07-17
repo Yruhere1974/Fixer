@@ -1,11 +1,12 @@
 type Tone = "gray" | "green" | "amber" | "red" | "blue";
 
+// Serene Network chips: pill-shaped, low-opacity category fill (DESIGN §Components).
 const tones: Record<Tone, string> = {
-  gray: "bg-zinc-100 text-zinc-700",
-  green: "bg-emerald-100 text-emerald-800",
-  amber: "bg-amber-100 text-amber-800",
-  red: "bg-red-100 text-red-800",
-  blue: "bg-sky-100 text-sky-800",
+  gray: "bg-surface-container text-on-surface-variant",
+  green: "bg-primary-fixed text-on-primary-fixed",
+  amber: "bg-warning-container text-on-warning-container",
+  red: "bg-error-container text-on-error-container",
+  blue: "bg-secondary-container text-on-secondary-container",
 };
 
 export function Badge({ tone = "gray", children }: { tone?: Tone; children: React.ReactNode }) {

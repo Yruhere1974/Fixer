@@ -29,15 +29,15 @@ export function DisclosureForm({
 
   return (
     <form action={formAction} className="space-y-3">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-on-surface-variant">
         Test a family update against the client&apos;s consent. The guard permits or refuses it,
         and records the attempt either way.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm">
-          <span className="mb-1 block font-medium text-zinc-700">Recipient</span>
-          <select name="recipientContactId" className="w-full rounded-md border border-zinc-300 px-2 py-1.5" required>
+          <span className="mb-1 block font-medium text-on-surface-variant">Recipient</span>
+          <select name="recipientContactId" className="field w-full px-2.5 py-1.5" required>
             <option value="">Select…</option>
             {contacts.map((c) => (
               <option key={c.id} value={c.id}>
@@ -48,8 +48,8 @@ export function DisclosureForm({
         </label>
 
         <label className="text-sm">
-          <span className="mb-1 block font-medium text-zinc-700">Information</span>
-          <select name="category" className="w-full rounded-md border border-zinc-300 px-2 py-1.5">
+          <span className="mb-1 block font-medium text-on-surface-variant">Information</span>
+          <select name="category" className="field w-full px-2.5 py-1.5">
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {infoCategoryLabel[c]}
@@ -59,8 +59,8 @@ export function DisclosureForm({
         </label>
 
         <label className="text-sm">
-          <span className="mb-1 block font-medium text-zinc-700">Channel</span>
-          <select name="channel" className="w-full rounded-md border border-zinc-300 px-2 py-1.5">
+          <span className="mb-1 block font-medium text-on-surface-variant">Channel</span>
+          <select name="channel" className="field w-full px-2.5 py-1.5">
             {CHANNELS.map((c) => (
               <option key={c} value={c}>
                 {channelLabel[c]}
@@ -70,10 +70,10 @@ export function DisclosureForm({
         </label>
 
         <label className="text-sm">
-          <span className="mb-1 block font-medium text-zinc-700">What would be shared</span>
+          <span className="mb-1 block font-medium text-on-surface-variant">What would be shared</span>
           <input
             name="infoSummary"
-            className="w-full rounded-md border border-zinc-300 px-2 py-1.5"
+            className="field w-full px-2.5 py-1.5"
             placeholder="e.g. Physio appointment is Tuesday 2pm"
             required
           />
@@ -83,23 +83,23 @@ export function DisclosureForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-sky-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-800 disabled:opacity-50"
+        className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-on-primary shadow-[0_4px_12px_rgba(90,86,137,0.3)] hover:bg-primary-container disabled:opacity-50"
       >
         {pending ? "Checking…" : "Check & record"}
       </button>
 
       {state && (
         <div
-          className={`rounded-md border p-3 text-sm ${
+          className={`rounded-xl border p-3 text-sm ${
             state.allowed
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-red-200 bg-red-50 text-red-800"
+              ? "border-primary/30 bg-primary-fixed/40 text-on-primary-fixed"
+              : "border-error/30 bg-error-container text-on-error-container"
           }`}
         >
           <p className="font-medium">{state.allowed ? "Permitted" : "Blocked"}</p>
           <p>{state.message}</p>
           {state.warnings.length > 0 && (
-            <ul className="mt-1 list-disc pl-5 text-amber-800">
+            <ul className="mt-1 list-disc pl-5 text-on-warning-container">
               {state.warnings.map((w, i) => (
                 <li key={i}>{w}</li>
               ))}

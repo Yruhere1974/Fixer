@@ -44,30 +44,35 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-8">
       <div>
-        <Link href="/" className="text-sm text-sky-700 hover:underline">
-          ← All clients
+        <Link href="/" className="text-sm text-primary hover:underline">
+          ← Workspace
         </Link>
-        <div className="mt-2 flex items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">{client.displayName}</h1>
+        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+          Client
+        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <h1 className="text-3xl font-semibold tracking-tight text-on-surface">
+            {client.displayName}
+          </h1>
           <Badge tone={client.status === "ACTIVE" ? "green" : "gray"}>
             {clientStatusLabel[client.status]}
           </Badge>
         </div>
-        <p className="mt-1 text-sm text-zinc-500">
-          Navigator: {client.assignedNavigator?.name ?? "—"} · Retention:{" "}
-          {client.retentionCategory ?? "—"}
+        <p className="mt-2 text-on-surface-variant">
+          Navigator <span className="text-on-surface">{client.assignedNavigator?.name ?? "—"}</span>{" "}
+          · Retention {client.retentionCategory ?? "—"}
           {client.legalHold && " · Legal hold"}
         </p>
       </div>
 
       {/* Journey (workflow.md) */}
       <Section title="Journey">
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Inquiry">
             {client.inquiry ? (
               <>
                 {client.inquiry.source} · {fitDecisionLabel[client.inquiry.fitDecision]}
-                <div className="text-zinc-500">{client.inquiry.generalReason}</div>
+                <div className="text-on-surface-variant">{client.inquiry.generalReason}</div>
               </>
             ) : (
               "—"
@@ -78,7 +83,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               <>
                 {screenOutcomeLabel[client.screening.outcome]} ·{" "}
                 {client.screening.immediateConcern ? "Immediate concern" : "No immediate concern"}
-                <div className="text-zinc-500">{client.screening.objectiveFacts}</div>
+                <div className="text-on-surface-variant">{client.screening.objectiveFacts}</div>
               </>
             ) : (
               "—"
@@ -97,7 +102,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           <Field label="Intake objective">
             {client.intake ? client.intake.serviceObjective : "—"}
             {client.intake?.doNotShare && (
-              <div className="mt-1 text-red-700">Do not share: {client.intake.doNotShare}</div>
+              <div className="mt-1 font-medium text-error">
+                Do not share: {client.intake.doNotShare}
+              </div>
             )}
           </Field>
         </div>
@@ -106,30 +113,36 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
       {/* Consents */}
       <Section title="Consents & authority">
         {client.consents.length === 0 ? (
-          <p className="text-sm text-zinc-400">No consents recorded.</p>
+          <p className="text-sm text-on-surface-variant/70">No consents recorded.</p>
         ) : (
           <ul className="space-y-3">
             {client.consents.map((c) => {
               const status = consentStatus(c);
               return (
-                <li key={c.id} className="rounded-md border border-zinc-200 p-3 text-sm">
+                <li key={c.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-4 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{consentTypeLabel[c.type]}</span>
+                    <span className="font-semibold">{consentTypeLabel[c.type]}</span>
                     <Badge tone={consentTone[status]}>{consentStatusLabel[status]}</Badge>
                   </div>
-                  <div className="mt-1 text-zinc-600">
-                    Covers: {c.coveredInfo.map((i) => infoCategoryLabel[i]).join(", ") || "—"}
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {c.coveredInfo.map((i) => (
+                      <span
+                        key={i}
+                        className="rounded-full bg-primary-fixed/60 px-2 py-0.5 text-xs text-on-primary-fixed"
+                      >
+                        {infoCategoryLabel[i]}
+                      </span>
+                    ))}
                   </div>
-                  <div className="text-zinc-600">
+                  <div className="mt-2 text-on-surface-variant">
                     Channels: {c.channels.map((ch) => channelLabel[ch]).join(", ") || "—"}
+                    {c.recipients.length > 0 &&
+                      ` · Recipients: ${c.recipients.map((r) => r.name).join(", ")}`}
                   </div>
-                  {c.recipients.length > 0 && (
-                    <div className="text-zinc-600">
-                      Recipients: {c.recipients.map((r) => r.name).join(", ")}
-                    </div>
+                  {c.excludedInfo && (
+                    <div className="font-medium text-error">Excludes: {c.excludedInfo}</div>
                   )}
-                  {c.excludedInfo && <div className="text-red-700">Excludes: {c.excludedInfo}</div>}
-                  <div className="mt-1 text-xs text-zinc-400">
+                  <div className="mt-1 text-xs text-on-surface-variant/70">
                     Effective {formatDate(c.effectiveDate)}
                     {c.expiryDate && ` · expires ${formatDate(c.expiryDate)}`} · recorded by{" "}
                     {c.recordedBy?.name ?? "—"}
@@ -144,34 +157,37 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
       {/* Action plan */}
       <Section title="Action plan">
         {!client.actionPlan ? (
-          <p className="text-sm text-zinc-400">No action plan yet.</p>
+          <p className="text-sm text-on-surface-variant/70">No action plan yet.</p>
         ) : (
           <>
-            <p className="mb-3 text-sm text-zinc-600">
-              Desired outcome: {client.actionPlan.desiredOutcome}
+            <p className="mb-4 text-sm text-on-surface-variant">
+              Desired outcome:{" "}
+              <span className="text-on-surface">{client.actionPlan.desiredOutcome}</span>
             </p>
             <ul className="space-y-3">
               {client.actionPlan.items.map((item) => (
-                <li key={item.id} className="rounded-md border border-zinc-200 p-3 text-sm">
+                <li key={item.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-4 text-sm">
                   <div className="flex items-start justify-between gap-3">
-                    <span className="font-medium">{item.title}</span>
+                    <span className="font-semibold">{item.title}</span>
                     <Badge tone={actionTone[item.status]}>{actionStatusLabel[item.status]}</Badge>
                   </div>
-                  <div className="mt-1 text-xs text-zinc-500">
+                  <div className="mt-1 text-xs text-on-surface-variant">
                     {priorityLabel[item.priority]} · Owner {item.owner?.name ?? "—"} · Due{" "}
                     {formatDate(item.dueDate)} · Approval {approvalStatusLabel[item.approvalStatus]}
                     {item.estimatedCost != null && ` · Est. ${money(item.estimatedCost)}`}
                   </div>
                   {item.evidence && (
-                    <div className="mt-1 text-xs text-emerald-700">Evidence: {item.evidence}</div>
+                    <div className="mt-1 text-xs font-medium text-primary">
+                      Evidence: {item.evidence}
+                    </div>
                   )}
 
                   {item.status !== "DONE" && (
-                    <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-zinc-100 pt-3">
+                    <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-outline-variant/40 pt-4">
                       {item.approvalStatus === "PENDING" && (
                         <form action={approveActionItem}>
                           <input type="hidden" name="itemId" value={item.id} />
-                          <button className="rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium hover:bg-zinc-50">
+                          <button className="rounded-full border-2 border-secondary px-3.5 py-1.5 text-xs font-semibold text-secondary hover:bg-secondary-container/40">
                             Approve
                           </button>
                         </form>
@@ -179,17 +195,17 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                       <form action={completeActionItem} className="flex items-end gap-2">
                         <input type="hidden" name="itemId" value={item.id} />
                         <label className="text-xs">
-                          <span className="mb-1 block text-zinc-600">
+                          <span className="mb-1 block font-medium text-on-surface-variant">
                             Evidence of completion (required)
                           </span>
                           <input
                             name="evidence"
                             required
-                            className="w-64 rounded-md border border-zinc-300 px-2 py-1"
+                            className="field w-64 px-2.5 py-1.5"
                             placeholder="e.g. Booking confirmed #1234"
                           />
                         </label>
-                        <button className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-800">
+                        <button className="rounded-full bg-primary px-3.5 py-1.5 text-xs font-semibold text-on-primary shadow-[0_4px_12px_rgba(90,86,137,0.3)] hover:bg-primary-container">
                           Mark done
                         </button>
                       </form>
@@ -203,9 +219,9 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
       </Section>
 
       {/* Disclosure guard */}
-      <Section title="Family update (consent guard)">
+      <Section title="Family update — consent guard">
         {client.approvedContacts.length === 0 ? (
-          <p className="text-sm text-zinc-400">No approved contacts recorded.</p>
+          <p className="text-sm text-on-surface-variant/70">No approved contacts recorded.</p>
         ) : (
           <DisclosureForm
             clientId={client.id}
@@ -218,16 +234,18 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         )}
 
         {client.disclosures.length > 0 && (
-          <div className="mt-4">
-            <h3 className="mb-2 text-sm font-semibold text-zinc-700">Recent disclosure attempts</h3>
-            <ul className="space-y-1 text-sm">
+          <div className="mt-5">
+            <h3 className="mb-2 text-sm font-semibold">Recent disclosure attempts</h3>
+            <ul className="space-y-1.5 text-sm">
               {client.disclosures.map((d) => (
-                <li key={d.id} className="flex items-center gap-2">
+                <li key={d.id} className="flex flex-wrap items-center gap-2">
                   <Badge tone={d.allowed ? "green" : "red"}>{d.allowed ? "Sent" : "Blocked"}</Badge>
-                  <span className="text-zinc-700">
+                  <span className="text-on-surface-variant">
                     {infoCategoryLabel[d.category]} → {d.recipientName} via {channelLabel[d.channel]}
                   </span>
-                  <span className="text-xs text-zinc-400">{formatDate(d.disclosedAt)}</span>
+                  <span className="text-xs text-on-surface-variant/60">
+                    {formatDate(d.disclosedAt)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -237,13 +255,15 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
 
       {/* Audit */}
       <Section title="Audit trail">
-        <ul className="space-y-1 text-sm">
+        <ul className="space-y-2 text-sm">
           {client.auditEvents.map((e) => (
-            <li key={e.id} className="flex gap-2 text-zinc-600">
-              <span className="text-xs text-zinc-400">{formatDate(e.createdAt)}</span>
-              <span className="font-mono text-xs text-zinc-500">{e.action}</span>
-              <span>{e.summary}</span>
-              <span className="text-xs text-zinc-400">— {e.actor?.name ?? "system"}</span>
+            <li key={e.id} className="flex flex-wrap items-baseline gap-2 text-on-surface-variant">
+              <span className="text-xs text-on-surface-variant/60">{formatDate(e.createdAt)}</span>
+              <span className="rounded bg-surface-container px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-on-surface-variant">
+                {e.action}
+              </span>
+              <span className="text-on-surface">{e.summary}</span>
+              <span className="text-xs text-on-surface-variant/60">— {e.actor?.name ?? "system"}</span>
             </li>
           ))}
         </ul>
@@ -254,8 +274,8 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5">
-      <h2 className="mb-3 text-lg font-semibold tracking-tight">{title}</h2>
+    <section className="card p-6">
+      <h2 className="mb-4 text-lg font-semibold tracking-tight text-primary">{title}</h2>
       {children}
     </section>
   );
@@ -264,8 +284,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="text-sm">
-      <div className="text-xs uppercase tracking-wide text-zinc-400">{label}</div>
-      <div className="mt-0.5 text-zinc-800">{children}</div>
+      <div className="text-xs font-medium uppercase tracking-wide text-on-surface-variant/70">
+        {label}
+      </div>
+      <div className="mt-1 text-on-surface">{children}</div>
     </div>
   );
 }
