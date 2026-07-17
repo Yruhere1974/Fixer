@@ -183,11 +183,22 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               </>
             ) : "—"}
           </Field>
-          <Field label="Agreement">
+          <Field label="Agreement & service terms">
             {client.agreement ? (
               <>
                 {client.agreement.servicePackage} ({client.agreement.versionAccepted}) ·{" "}
                 {client.agreement.feesConfirmed ? "Fees confirmed" : "Fees pending"}
+                <div className="mt-1 text-xs text-on-surface-variant">
+                  {[
+                    client.agreement.contactCadenceDays != null && `contact every ${client.agreement.contactCadenceDays}d`,
+                    client.agreement.includedProactiveContacts != null && `${client.agreement.includedProactiveContacts} proactive contacts`,
+                    client.agreement.responseWindowHours != null && `${client.agreement.responseWindowHours}h response`,
+                    client.agreement.includedHours != null && `${String(client.agreement.includedHours)}h included`,
+                    client.agreement.overageRate != null && `${money(client.agreement.overageRate)}/h overage`,
+                    client.agreement.authorizedFamilyRecipients != null && `${client.agreement.authorizedFamilyRecipients} family recipients`,
+                  ].filter(Boolean).join(" · ") || "No economic terms recorded."}
+                  {client.agreement.afterHoursPolicy && ` · after-hours: ${client.agreement.afterHoursPolicy}`}
+                </div>
               </>
             ) : "—"}
           </Field>
@@ -216,6 +227,19 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                   <Checkbox name="feesConfirmed" label="Fees confirmed" defaultChecked={client.agreement?.feesConfirmed} />
                   <Checkbox name="responseTimesConfirmed" label="Response times confirmed" defaultChecked={client.agreement?.responseTimesConfirmed} />
                 </div>
+                <fieldset className="border-t border-outline-variant/40 pt-3">
+                  <legend className="mb-1 text-xs font-semibold text-primary">Cadence &amp; economic guardrails (Tier 3)</legend>
+                  <div className="grid gap-3 sm:grid-cols-4">
+                    <Labeled label="Contact cadence (days)"><TextInput name="contactCadenceDays" type="number" min="0" defaultValue={client.agreement?.contactCadenceDays ?? ""} /></Labeled>
+                    <Labeled label="Included proactive contacts"><TextInput name="includedProactiveContacts" type="number" min="0" defaultValue={client.agreement?.includedProactiveContacts ?? ""} /></Labeled>
+                    <Labeled label="Response window (hours)"><TextInput name="responseWindowHours" type="number" min="0" defaultValue={client.agreement?.responseWindowHours ?? ""} /></Labeled>
+                    <Labeled label="Family recipients"><TextInput name="authorizedFamilyRecipients" type="number" min="0" defaultValue={client.agreement?.authorizedFamilyRecipients ?? ""} /></Labeled>
+                    <Labeled label="Included hours"><TextInput name="includedHours" type="number" step="0.5" min="0" defaultValue={client.agreement?.includedHours != null ? String(client.agreement.includedHours) : ""} /></Labeled>
+                    <Labeled label="Overage rate (CAD/h)"><TextInput name="overageRate" type="number" step="0.01" min="0" defaultValue={client.agreement?.overageRate != null ? String(client.agreement.overageRate) : ""} /></Labeled>
+                    <Labeled label="Travel radius (km)"><TextInput name="travelRadiusKm" type="number" min="0" defaultValue={client.agreement?.travelRadiusKm ?? ""} /></Labeled>
+                    <Labeled label="After-hours policy"><TextInput name="afterHoursPolicy" defaultValue={client.agreement?.afterHoursPolicy ?? ""} /></Labeled>
+                  </div>
+                </fieldset>
                 <SubmitButton pendingLabel="Saving…">Save agreement</SubmitButton>
               </form>
             </Editor>

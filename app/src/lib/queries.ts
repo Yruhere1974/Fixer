@@ -174,6 +174,51 @@ export async function getProvider(id: string) {
   });
 }
 
+// --- White-glove scorecard (Tier 3) ------------------------------------------
+
+/** Aggregate service-experience + operational measures across all clients. */
+export async function getScorecard(now: Date = new Date()) {
+  const soon = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const [
+    clientsTotal, clientsActive, withPrimary, withBackup, contactOverdue,
+    promisesKept, promisesMissed, promisesOpen, missedToldBefore,
+    handoffsTotal, handoffsCompleted,
+    recoveriesTotal, recoveriesOpen, recoveriesConfirmed,
+    providersTotal, providersPresentable,
+    incidentsOpen, privacyOpen, invoicesOverdue, appointmentsUpcoming,
+  ] = await Promise.all([
+    prisma.client.count(),
+    prisma.client.count({ where: { status: "ACTIVE" } }),
+    prisma.client.count({ where: { assignedNavigatorId: { not: null } } }),
+    prisma.client.count({ where: { backupNavigatorId: { not: null } } }),
+    prisma.client.count({ where: { status: { not: "CLOSED" }, nextContactDueAt: { not: null, lte: now } } }),
+    prisma.clientPromise.count({ where: { status: "KEPT" } }),
+    prisma.clientPromise.count({ where: { status: "MISSED" } }),
+    prisma.clientPromise.count({ where: { status: "OPEN" } }),
+    prisma.clientPromise.count({ where: { status: "MISSED", toldBeforeDeadline: true } }),
+    prisma.handoff.count(),
+    prisma.handoff.count({ where: { completedAt: { not: null } } }),
+    prisma.serviceRecovery.count(),
+    prisma.serviceRecovery.count({ where: { resolvedAt: null } }),
+    prisma.serviceRecovery.count({ where: { resolvedAt: { not: null }, resolvedConfirmedWithClient: true } }),
+    prisma.provider.count(),
+    prisma.provider.count({ where: { status: "ACTIVE", OR: [{ nextReviewDate: null }, { nextReviewDate: { gt: now } }] } }),
+    prisma.incidentRecord.count({ where: { status: { not: "CLOSED" } } }),
+    prisma.privacyRequest.count({ where: { status: { not: "COMPLETED" } } }),
+    prisma.invoice.count({ where: { status: "SENT", dueDate: { not: null, lte: now } } }),
+    prisma.appointment.count({ where: { status: { in: ["REQUESTED", "CONFIRMED"] }, scheduledAt: { not: null, gte: now, lte: soon } } }),
+  ]);
+
+  return {
+    clientsTotal, clientsActive, withPrimary, withBackup, contactOverdue,
+    promisesKept, promisesMissed, promisesOpen, missedToldBefore,
+    handoffsTotal, handoffsCompleted,
+    recoveriesTotal, recoveriesOpen, recoveriesConfirmed,
+    providersTotal, providersPresentable,
+    incidentsOpen, privacyOpen, invoicesOverdue, appointmentsUpcoming,
+  };
+}
+
 // --- Billing (§6.11) ---------------------------------------------------------
 
 export async function listInvoices() {

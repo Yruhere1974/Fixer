@@ -421,6 +421,16 @@ model ServiceAgreement {
   method           ConsentMethod
   signedAt         DateTime?
   createdAt        DateTime @default(now())
+
+  // Cadence + economic guardrails (white-glove Tier 3: protect the economics; contact cadence).
+  contactCadenceDays        Int?     // maximum period without meaningful contact
+  includedProactiveContacts Int?     // proactive contacts included in the package
+  responseWindowHours       Int?     // business-hours response target
+  includedHours             Decimal? @db.Decimal(10, 2)
+  overageRate               Decimal? @db.Decimal(10, 2)
+  authorizedFamilyRecipients Int?
+  travelRadiusKm            Int?
+  afterHoursPolicy          String?
 }
 
 /// Structured intake (plan §6.4). Leave irrelevant areas blank; collect less.

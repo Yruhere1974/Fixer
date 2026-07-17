@@ -27,6 +27,14 @@ export function decimal(formData: FormData, key: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Parse an optional integer; returns null when blank/invalid. */
+export function intVal(formData: FormData, key: string): number | null {
+  const raw = str(formData, key);
+  if (!raw) return null;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 /** Parse an optional date (yyyy-mm-dd); returns null when blank/invalid. */
 export function date(formData: FormData, key: string): Date | null {
   const raw = str(formData, key);

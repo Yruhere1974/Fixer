@@ -21,6 +21,22 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — White-glove Tier 3: economic guardrails + scorecard (white-glove
+  complete):** **Cadence & economics:** `ServiceAgreement` gains contact-cadence days,
+  included proactive contacts, response window, included hours, overage rate, authorized
+  family recipients, travel radius, and after-hours policy (+migration); the agreement
+  editor captures them and the client page shows a "service terms" summary — the doc's
+  "protect the economics". **White-glove scorecard** (`/scorecard`, gated
+  `canViewAllClients`): aggregated measures — clients with primary/backup lead, overdue
+  for contact, promises kept %, delays told before deadline, warm handoffs completed,
+  open/resolved service recovery, providers verified (not stale), open incidents/privacy,
+  overdue invoices, upcoming appointments; notes client-effort/confidence as not-yet-captured
+  (needs a feedback capture). Nav link + seed terms. **This completes all three white-glove
+  tiers — the `white-glove-application-improvements.md` doc is now fully implemented.**
+  - **Verification:** Playwright (`scripts/scorecard-e2e.mjs`) — scorecard renders with
+    live percentages; the client page shows the economic terms. typecheck + lint + build
+    clean; containers rebuilt.
+  - **Version:** Committed on `develop`.
 - **2026-07-16 — White-glove Tier 2: appointments, warm handoffs, service recovery:**
   Three linked subsystems. **Appointments & logistics (plan §6.7, white-glove #7):**
   `Appointment` model (neutral title, provider, scheduledAt, location/accessibility/

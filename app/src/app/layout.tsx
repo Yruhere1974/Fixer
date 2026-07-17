@@ -3,7 +3,7 @@ import { Manrope } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { currentUser } from "@/lib/session";
-import { canHandleIncidents, canHandlePrivacy, canManageBilling, canReportIncident } from "@/lib/access";
+import { canHandleIncidents, canHandlePrivacy, canManageBilling, canReportIncident, canViewAllClients } from "@/lib/access";
 import { logout } from "@/app/login/actions";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
@@ -48,6 +48,9 @@ export default async function RootLayout({
               </Link>
               <nav className="hidden gap-6 text-sm text-on-surface-variant sm:flex">
                 <Link href="/workspace" className="hover:text-primary">Workspace</Link>
+                {canViewAllClients(user.role) && (
+                  <Link href="/scorecard" className="hover:text-primary">Scorecard</Link>
+                )}
                 <Link href="/providers" className="hover:text-primary">Providers</Link>
                 {canHandleIncidents(user.role) ? (
                   <Link href="/incidents" className="hover:text-primary">Incidents</Link>

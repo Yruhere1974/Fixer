@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { requireUser } from "@/lib/session";
 import { canAccessClient, canCoordinate } from "@/lib/access";
-import { date, decimal, errState, str, strList, type FormState } from "@/lib/forms";
+import { date, decimal, errState, intVal, str, strList, type FormState } from "@/lib/forms";
 import type {
   AppointmentStatus,
   ChangeStatus,
@@ -49,25 +49,30 @@ export async function recordAgreement(formData: FormData) {
   const method = (str(formData, "method") || "ELECTRONIC_ACCEPTANCE") as ConsentMethod;
   if (!servicePackage) return;
 
+  const terms = {
+    contactCadenceDays: intVal(formData, "contactCadenceDays"),
+    includedProactiveContacts: intVal(formData, "includedProactiveContacts"),
+    responseWindowHours: intVal(formData, "responseWindowHours"),
+    includedHours: decimal(formData, "includedHours"),
+    overageRate: decimal(formData, "overageRate"),
+    authorizedFamilyRecipients: intVal(formData, "authorizedFamilyRecipients"),
+    travelRadiusKm: intVal(formData, "travelRadiusKm"),
+    afterHoursPolicy: str(formData, "afterHoursPolicy") || null,
+  };
+  const base = {
+    servicePackage,
+    versionAccepted,
+    method,
+    feesConfirmed: str(formData, "feesConfirmed") === "on",
+    responseTimesConfirmed: str(formData, "responseTimesConfirmed") === "on",
+    signedAt: new Date(),
+    ...terms,
+  };
+
   await prisma.serviceAgreement.upsert({
     where: { clientId },
-    update: {
-      servicePackage,
-      versionAccepted,
-      method,
-      feesConfirmed: str(formData, "feesConfirmed") === "on",
-      responseTimesConfirmed: str(formData, "responseTimesConfirmed") === "on",
-      signedAt: new Date(),
-    },
-    create: {
-      clientId,
-      servicePackage,
-      versionAccepted,
-      method,
-      feesConfirmed: str(formData, "feesConfirmed") === "on",
-      responseTimesConfirmed: str(formData, "responseTimesConfirmed") === "on",
-      signedAt: new Date(),
-    },
+    update: base,
+    create: { clientId, ...base },
   });
 
   await recordAudit({
