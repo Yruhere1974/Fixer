@@ -21,6 +21,21 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Full dockerization (separate containers):** The app and database
+  now run as separate containers via `app/docker-compose.yml`: `fixer-app` (Next.js
+  `standalone` image, own multi-stage `Dockerfile`, non-root, port 3000), `fixer-db`
+  (Postgres 16 + volume + healthcheck), and a one-shot `fixer-migrate` job that runs
+  `prisma migrate deploy` and exits. Startup order: db healthy → migrate → app.
+  Migrations run in the `migrate` service (built from the `builder` stage with full
+  Prisma deps), keeping the app runtime lean. `next.config.ts` set to
+  `output: "standalone"`.
+  - **Verification:** cold start with a wiped volume applied the init migration to a
+    fresh DB, the app served HTTP 200, and after seeding the dashboard + client page
+    render the consent guard and audit trail. `docker compose up --build` brings up
+    the whole stack.
+  - **Version:** Committed on `develop`. Note: production still requires a
+    Canadian-region host for data residency (ADR 0002); the container alone does not
+    satisfy it.
 - **2026-07-16 — Serene Lavender reskin:** Applied the `design/serene_lavender`
   design system to the workspace UI (muted-purple `#5a5689` primary, Manrope, soft
   rounded cards with ambient tinted shadows, pill chips, filled-fill inputs) — the

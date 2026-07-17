@@ -1,5 +1,6 @@
-# Local development database only.
-# Production must run in a Canadian region for data residency (see ADR 0002, plan §7.2/§8.6).
+# Separate containers: the Next.js app and its Postgres database, plus a one-shot
+# migration job. Production must run in a Canadian region for data residency
+# (ADR 0002, plan §7.2/§8.6).
 services:
   db:
     image: postgres:16
@@ -10,9 +11,47 @@ services:
       POSTGRES_PASSWORD: fixer_local_dev
       POSTGRES_DB: fixer
     ports:
-      - "5434:5432"
+      - "5434:5432" # host access for local tooling; the app uses the internal network
     volumes:
       - fixer-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fixer -d fixer"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Applies pending migrations once, then exits. Built from the `builder` stage because it
+  # carries the full Prisma CLI and its dependencies.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: fixer-migrate
+    command: ["npx", "prisma", "migrate", "deploy"]
+    environment:
+      DATABASE_URL: "postgresql://fixer:fixer_local_dev@db:5432/fixer?schema=public"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: fixer-app
+    restart: unless-stopped
+    environment:
+      # Talks to the db service over the compose network (container port 5432).
+      DATABASE_URL: "postgresql://fixer:fixer_local_dev@db:5432/fixer?schema=public"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   fixer-db-data:
