@@ -244,6 +244,44 @@ async function main() {
     },
   });
 
+  // --- Tier 2: appointment, warm handoff, service recovery ---
+  await prisma.appointment.create({
+    data: {
+      clientId: client.id,
+      purpose: "Physiotherapy appointment",
+      providerName: "Okanagan Physiotherapy",
+      scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // upcoming -> exception
+      location: "Kelowna",
+      transportation: "HandyDART booked",
+      whatToBring: "Referral letter, list of medications.",
+      clientQuestions: "What exercises can I do at home?",
+      status: "CONFIRMED",
+      locationConfirmed: true,
+      transportConfirmed: true,
+      createdById: navigator.id,
+    },
+  });
+  await prisma.handoff.create({
+    data: {
+      clientId: client.id,
+      toName: "Bookkeeper (fictional)",
+      reason: "Bookkeeper will prepare the monthly invoice.",
+      commitment: "Issue the invoice by Friday.",
+      permissionObtained: true,
+      introduced: true,
+      createdById: navigator.id,
+    },
+  });
+  await prisma.serviceRecovery.create({
+    data: {
+      clientId: client.id,
+      issueType: "MISSED_CALLBACK",
+      description: "A promised callback on Monday was missed.",
+      acknowledgement: "Apologised same day and explained the cause.",
+      ownerId: navigator.id, // open -> exception
+    },
+  });
+
   // --- Decision log (§6.10) ---
   await prisma.decision.create({
     data: {

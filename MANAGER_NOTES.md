@@ -21,6 +21,25 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — White-glove Tier 2: appointments, warm handoffs, service recovery:**
+  Three linked subsystems. **Appointments & logistics (plan §6.7, white-glove #7):**
+  `Appointment` model (neutral title, provider, scheduledAt, location/accessibility/
+  transport/companion, what-to-bring, client questions, cancellation, reminder, status)
+  with a **door-to-door checklist** (location/transport/documents/questions/backup) and
+  coordination-only outcome/follow-up; "Upcoming appointments (7 days)" exception. **Warm
+  handoff (white-glove #5):** `Handoff` model tracking the 8-step standard (reason, to-whom,
+  commitment, permission/introduced/context/accepted/owner-visible/followed-up) with
+  complete. **Service recovery (white-glove #6):** `ServiceRecovery` model (issue type,
+  ownership, acknowledgement, explanation, plan, revised commitment, goodwill, learning,
+  client-confirmed resolution), distinct from formal incidents; "Open service recovery"
+  exception. Client-page sections for all three; enums + migration; seed demo. All
+  assignment-scoped + audited.
+  - **Verification:** Playwright (`scripts/tier2-e2e.mjs`) + DB — dashboard shows the new
+    exception cards; adding an appointment, completing the seeded handoff, and resolving the
+    seeded recovery all persist (confirmed in the DB) and audit. typecheck + lint + build
+    clean; containers rebuilt.
+  - **Version:** Committed on `develop`. Remaining white-glove: Tier 3 (package cadence /
+    economic guardrails + white-glove scorecard).
 - **2026-07-16 — White-glove Tier 1: relationship spine + promise register:** First
   slice of the white-glove service layer (`Documents/white-glove-application-improvements.md`),
   wrapping the compliance core with a relationship layer. **Relationship & contact:**

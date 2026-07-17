@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/badge";
 import { getExceptions, getIncidentExceptions, getInvoiceExceptions, getPrivacyExceptions, getProviderExceptions, getRetentionCandidates, listClients } from "@/lib/queries";
-import { clientStatusLabel, consentTypeLabel, formatDate, incidentTypeLabel, money, privacyRequestTypeLabel, serviceCategoryLabel } from "@/lib/labels";
+import { clientStatusLabel, consentTypeLabel, formatDate, incidentTypeLabel, money, privacyRequestTypeLabel, recoveryIssueTypeLabel, serviceCategoryLabel } from "@/lib/labels";
 import type { ClientStatus } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/session";
 import { canCoordinate, canHandleIncidents, canHandlePrivacy, canManageBilling, canManageDirectory } from "@/lib/access";
@@ -44,6 +44,8 @@ export default async function DashboardPage() {
     exceptions.pendingExpenses.length +
     exceptions.contactDue.length +
     exceptions.promisesDue.length +
+    exceptions.upcomingAppointments.length +
+    exceptions.openRecoveries.length +
     providerAttention.length +
     incidentAttention.length +
     privacyOverdue.length +
@@ -110,6 +112,26 @@ export default async function DashboardPage() {
               href: `/clients/${p.client.id}`,
               label: p.description,
               meta: `${p.client.displayName} · by ${formatDate(p.dueAt)}`,
+            }))}
+          />
+          <ExceptionCard
+            title="Upcoming appointments (7 days)"
+            tone="amber"
+            items={exceptions.upcomingAppointments.map((a) => ({
+              id: a.id,
+              href: `/clients/${a.client.id}`,
+              label: a.purpose,
+              meta: `${a.client.displayName} · ${formatDate(a.scheduledAt)}`,
+            }))}
+          />
+          <ExceptionCard
+            title="Open service recovery"
+            tone="red"
+            items={exceptions.openRecoveries.map((r) => ({
+              id: r.id,
+              href: `/clients/${r.client.id}`,
+              label: recoveryIssueTypeLabel[r.issueType],
+              meta: r.client.displayName,
             }))}
           />
           <ExceptionCard

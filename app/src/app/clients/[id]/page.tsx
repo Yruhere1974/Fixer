@@ -11,6 +11,7 @@ import { AddChangeForm } from "./add-change-form";
 import { AddDecisionForm } from "./add-decision-form";
 import { AddExpenseForm } from "./add-expense-form";
 import { AddPromiseForm } from "./add-promise-form";
+import { AddAppointmentForm, AddHandoffForm, AddRecoveryForm } from "./service-forms";
 import { approveActionItem, completeActionItem } from "./actions";
 import {
   addApprovedContact,
@@ -21,8 +22,11 @@ import {
   logClientContact,
   recordAgreement,
   resolvePromise,
+  resolveRecovery,
   saveIntake,
+  updateAppointment,
   updateClientStatus,
+  updateHandoff,
   updateRelationship,
   withdrawConsent,
 } from "./journey-actions";
@@ -33,11 +37,13 @@ import { canCoordinate } from "@/lib/access";
 import { consentStatus, type ConsentStatus } from "@/lib/consent";
 import {
   actionStatusLabel,
+  appointmentStatusLabel,
   approvalStatusLabel,
   changeStatusLabel,
   channelLabel,
   expenseStatusLabel,
   promiseStatusLabel,
+  recoveryIssueTypeLabel,
   clientStatusLabel,
   consentStatusLabel,
   consentTypeLabel,
@@ -75,6 +81,7 @@ const changeTone: Record<ChangeStatus, "amber" | "green" | "red"> = {
 
 const expenseTone = { REQUESTED: "amber", APPROVED: "green", REJECTED: "red" } as const;
 const promiseTone = { OPEN: "amber", KEPT: "green", MISSED: "red" } as const;
+const apptTone = { REQUESTED: "amber", CONFIRMED: "blue", COMPLETED: "green", CANCELLED: "gray" } as const;
 
 const INFO_CATEGORIES: InfoCategory[] = [
   "CONTACT_DETAILS", "SCHEDULING", "PROVIDER_COORDINATION", "GENERAL_WELLBEING",
@@ -493,6 +500,158 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         )}
       </Section>
 
+      {/* Appointments & door-to-door logistics (§6.7, white-glove #7) */}
+      <Section title="Appointments & logistics">
+        {client.appointments.length === 0 ? (
+          <p className="text-sm text-on-surface-variant/70">No appointments recorded.</p>
+        ) : (
+          <ul className="space-y-3">
+            {client.appointments.map((a) => (
+              <li key={a.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-4 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-semibold">{a.purpose}</span>
+                  <Badge tone={apptTone[a.status]}>{appointmentStatusLabel[a.status]}</Badge>
+                </div>
+                <div className="mt-1 text-xs text-on-surface-variant">
+                  {a.providerName && `${a.providerName} · `}{a.scheduledAt ? formatDate(a.scheduledAt) : "unscheduled"}
+                  {a.location && ` · ${a.location}`}{a.transportation && ` · ${a.transportation}`}
+                </div>
+                {(a.whatToBring || a.clientQuestions) && (
+                  <div className="mt-1 text-xs text-on-surface-variant">
+                    {a.whatToBring && <>Bring: {a.whatToBring}. </>}
+                    {a.clientQuestions && <>Questions: {a.clientQuestions}</>}
+                  </div>
+                )}
+                {mayCoordinate && (
+                  <form action={updateAppointment} className="mt-3 space-y-2 border-t border-outline-variant/40 pt-3">
+                    {hidden}
+                    <input type="hidden" name="appointmentId" value={a.id} />
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                      <Check name="locationConfirmed" label="Location confirmed" checked={a.locationConfirmed} />
+                      <Check name="transportConfirmed" label="Transport confirmed" checked={a.transportConfirmed} />
+                      <Check name="documentsReady" label="Documents ready" checked={a.documentsReady} />
+                      <Check name="questionsPrepared" label="Questions prepared" checked={a.questionsPrepared} />
+                      <Check name="backupPlanned" label="Backup planned" checked={a.backupPlanned} />
+                    </div>
+                    <div className="flex flex-wrap items-end gap-2">
+                      <label className="text-xs">
+                        <span className="mb-1 block font-medium text-on-surface-variant">Status</span>
+                        <select name="status" defaultValue={a.status} className="field px-2.5 py-1.5">
+                          <option value="REQUESTED">Requested</option>
+                          <option value="CONFIRMED">Confirmed</option>
+                          <option value="COMPLETED">Completed</option>
+                          <option value="CANCELLED">Cancelled</option>
+                        </select>
+                      </label>
+                      <input name="outcomeNote" defaultValue={a.outcomeNote ?? ""} className="field w-56 px-2.5 py-1.5 text-xs" placeholder="Outcome (coordination facts)" />
+                      <input name="followUpAction" defaultValue={a.followUpAction ?? ""} className="field w-48 px-2.5 py-1.5 text-xs" placeholder="Follow-up action" />
+                      <SubmitButton variant="outline">Save</SubmitButton>
+                    </div>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {mayCoordinate && (
+          <Editor label="Add an appointment (§6.7)">
+            <AddAppointmentForm clientId={client.id} />
+          </Editor>
+        )}
+      </Section>
+
+      {/* Warm handoffs (white-glove #5) */}
+      <Section title="Warm handoffs">
+        {client.handoffs.length === 0 ? (
+          <p className="text-sm text-on-surface-variant/70">No handoffs recorded.</p>
+        ) : (
+          <ul className="space-y-3">
+            {client.handoffs.map((h) => (
+              <li key={h.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-4 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-semibold">To {h.toName}</span>
+                  <Badge tone={h.completedAt ? "green" : "amber"}>{h.completedAt ? "Completed" : "In progress"}</Badge>
+                </div>
+                <div className="mt-1 text-xs text-on-surface-variant">
+                  {h.reason}{h.commitment && ` · will: ${h.commitment}`} · started by {h.createdBy?.name ?? "—"}
+                </div>
+                {mayCoordinate && !h.completedAt && (
+                  <form action={updateHandoff} className="mt-3 space-y-2 border-t border-outline-variant/40 pt-3">
+                    {hidden}
+                    <input type="hidden" name="handoffId" value={h.id} />
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                      <Check name="permissionObtained" label="Client permission" checked={h.permissionObtained} />
+                      <Check name="introduced" label="Introduced" checked={h.introduced} />
+                      <Check name="contextTransferred" label="Context transferred" checked={h.contextTransferred} />
+                      <Check name="accepted" label="New person accepted" checked={h.accepted} />
+                      <Check name="primaryOwnerVisible" label="Owner still visible" checked={h.primaryOwnerVisible} />
+                      <Check name="followedUp" label="Followed up after" checked={h.followedUp} />
+                    </div>
+                    <div className="flex gap-2">
+                      <button name="complete" value="0" className="rounded-full border border-outline-variant px-3 py-1 text-xs font-semibold text-on-surface-variant hover:bg-surface">Save</button>
+                      <button name="complete" value="1" className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-on-primary hover:bg-primary-container">Save &amp; complete</button>
+                    </div>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {mayCoordinate && (
+          <Editor label="Start a warm handoff (§white-glove #5)">
+            <AddHandoffForm clientId={client.id} />
+          </Editor>
+        )}
+      </Section>
+
+      {/* Service recovery (white-glove #6) */}
+      <Section title="Service recovery">
+        {client.serviceRecoveries.length === 0 ? (
+          <p className="text-sm text-on-surface-variant/70">No service-recovery records.</p>
+        ) : (
+          <ul className="space-y-3">
+            {client.serviceRecoveries.map((r) => (
+              <li key={r.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-4 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-semibold">{recoveryIssueTypeLabel[r.issueType]}</span>
+                  <Badge tone={r.resolvedAt ? "green" : "red"}>{r.resolvedAt ? "Resolved" : "Open"}</Badge>
+                </div>
+                <div className="mt-1 text-on-surface-variant">{r.description}</div>
+                <div className="mt-1 text-xs text-on-surface-variant/80">
+                  Owner {r.owner?.name ?? "—"}
+                  {r.recoveryPlan && ` · plan: ${r.recoveryPlan}`}
+                  {r.goodwillAction && ` · goodwill: ${r.goodwillAction}`}
+                  {r.resolvedAt && ` · ${r.resolvedConfirmedWithClient ? "client confirmed resolved" : "resolved"}`}
+                </div>
+                {mayCoordinate && !r.resolvedAt && (
+                  <form action={resolveRecovery} className="mt-3 space-y-2 border-t border-outline-variant/40 pt-3">
+                    {hidden}
+                    <input type="hidden" name="recoveryId" value={r.id} />
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <input name="explanation" className="field px-2.5 py-1.5 text-xs" placeholder="Plain-language explanation" />
+                      <input name="recoveryPlan" className="field px-2.5 py-1.5 text-xs" placeholder="Immediate recovery plan" />
+                      <input name="revisedCommitment" className="field px-2.5 py-1.5 text-xs" placeholder="Revised commitment" />
+                      <input name="goodwillAction" className="field px-2.5 py-1.5 text-xs" placeholder="Goodwill / credit (optional)" />
+                    </div>
+                    <input name="learningNote" className="field w-full px-2.5 py-1.5 text-xs" placeholder="Internal learning (not client-facing)" />
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Check name="resolvedConfirmedWithClient" label="Client confirms it feels resolved" checked={false} />
+                      <button name="resolve" value="0" className="rounded-full border border-outline-variant px-3 py-1 text-xs font-semibold text-on-surface-variant hover:bg-surface">Save</button>
+                      <button name="resolve" value="1" className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-on-primary hover:bg-primary-container">Save &amp; resolve</button>
+                    </div>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {mayCoordinate && (
+          <Editor label="Open a service-recovery record (§white-glove #6)">
+            <AddRecoveryForm clientId={client.id} />
+          </Editor>
+        )}
+      </Section>
+
       {/* Decisions (§6.10) */}
       <Section title="Decisions">
         {client.decisions.length === 0 ? (
@@ -680,5 +839,14 @@ function Editor({ label, children }: { label: string; children: ReactNode }) {
       <summary className="cursor-pointer text-sm font-medium text-primary">{label}</summary>
       <div className="mt-3">{children}</div>
     </details>
+  );
+}
+
+function Check({ name, label, checked }: { name: string; label: string; checked: boolean }) {
+  return (
+    <label className="flex items-center gap-1.5 text-on-surface-variant">
+      <input type="checkbox" name={name} defaultChecked={checked} className="h-3.5 w-3.5 rounded border-outline-variant" />
+      {label}
+    </label>
   );
 }

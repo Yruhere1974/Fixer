@@ -110,6 +110,27 @@ enum PromiseStatus {
   MISSED
 }
 
+/// Appointment coordination status (plan §6.7). Outcomes hold coordination facts, not clinical detail.
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+/// Lower-level service-experience failures for recovery (white-glove #6), distinct from formal incidents.
+enum RecoveryIssueType {
+  MISSED_CALLBACK
+  CONFUSING_MESSAGE
+  PROVIDER_CANCELLATION
+  DELAY
+  REPEATED_REQUEST
+  BILLING_SURPRISE
+  POOR_HANDOFF
+  FELT_UNHEARD
+  OTHER
+}
+
 /// Problem-intake types (plan §6.12, ops §17.5).
 enum IncidentType {
   COMPLAINT
@@ -253,6 +274,9 @@ model User {
   assignedClients Client[]         @relation("assignedNavigator")
   backupForClients Client[]        @relation("backupNavigator")
   createdPromises ClientPromise[]  @relation("promiseCreator")
+  createdAppointments Appointment[] @relation("apptCreator")
+  createdHandoffs Handoff[]        @relation("handoffCreator")
+  ownedRecoveries ServiceRecovery[] @relation("recoveryOwner")
   handledInquiries Inquiry[]
   screens         ScreeningRecord[]
   recordedConsents ConsentRecord[] @relation("consentRecorder")
@@ -339,6 +363,9 @@ model Client {
   invoices         Invoice[]
   decisions        Decision[]
   promises         ClientPromise[]
+  appointments     Appointment[]
+  handoffs         Handoff[]
+  serviceRecoveries ServiceRecovery[]
   auditEvents      AuditEvent[]
 
   @@index([status])
@@ -765,6 +792,93 @@ model Invoice {
 
   @@index([clientId])
   @@index([status])
+}
+
+/// Appointment + door-to-door logistics (plan §6.7, white-glove #7). Coordination facts only —
+/// no clinical interpretation; calendar/reminder text stays neutral (§8.5).
+model Appointment {
+  id                        String            @id @default(cuid())
+  client                    Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId                  String
+  purpose                   String                             // neutral title, e.g. "Physiotherapy appointment"
+  providerName              String?
+  scheduledAt               DateTime?
+  location                  String?
+  accessibilityArrangements String?
+  transportation            String?
+  companion                 String?
+  whatToBring               String?
+  clientQuestions           String?
+  cancellationDeadline      DateTime?
+  cancellationFee           String?
+  reminderPreference        String?
+  status                    AppointmentStatus @default(REQUESTED)
+
+  // Door-to-door checklist (white-glove #7)
+  locationConfirmed         Boolean           @default(false)
+  transportConfirmed        Boolean           @default(false)
+  documentsReady            Boolean           @default(false)
+  questionsPrepared         Boolean           @default(false)
+  backupPlanned             Boolean           @default(false)
+
+  outcomeNote               String?                            // coordination outcome, not clinical
+  followUpAction            String?
+
+  createdBy                 User?             @relation("apptCreator", fields: [createdById], references: [id])
+  createdById               String?
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
+
+  @@index([clientId, status])
+  @@index([scheduledAt])
+}
+
+/// A warm handoff (white-glove #5): the client should not have to repeat their story or be handed a
+/// phone number and asked to start again. Tracks the 8-step standard.
+model Handoff {
+  id                  String    @id @default(cuid())
+  client              Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId            String
+  reason              String                        // why another person is becoming involved
+  toName              String                        // who is receiving the work
+  commitment          String?                       // what the new person will do and by when
+  permissionObtained  Boolean   @default(false)
+  introduced          Boolean   @default(false)
+  contextTransferred  Boolean   @default(false)
+  accepted            Boolean   @default(false)
+  primaryOwnerVisible Boolean   @default(true)
+  followedUp          Boolean   @default(false)
+  completedAt         DateTime?
+  createdBy           User?     @relation("handoffCreator", fields: [createdById], references: [id])
+  createdById         String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([clientId])
+}
+
+/// A light-touch service-recovery record (white-glove #6). Not every failure is a formal incident,
+/// but every meaningful experience failure should be visible and owned until the client feels it resolved.
+model ServiceRecovery {
+  id                          String            @id @default(cuid())
+  client                      Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId                    String
+  issueType                   RecoveryIssueType
+  description                 String
+  acknowledgement             String?
+  explanation                 String?
+  recoveryPlan                String?
+  revisedCommitment           String?
+  goodwillAction              String?
+  learningNote                String?
+  resolvedConfirmedWithClient Boolean           @default(false)
+  resolvedAt                  DateTime?
+  owner                       User?             @relation("recoveryOwner", fields: [ownerId], references: [id])
+  ownerId                     String?
+  createdAt                   DateTime          @default(now())
+  updatedAt                   DateTime          @updatedAt
+
+  @@index([clientId])
 }
 
 /// A client-facing promise (white-glove #4): tracked distinctly from internal tasks so quality is

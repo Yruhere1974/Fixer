@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/session";
 import { canAccessClient, canCoordinate } from "@/lib/access";
 import { date, decimal, errState, str, strList, type FormState } from "@/lib/forms";
 import type {
+  AppointmentStatus,
   ChangeStatus,
   ClientStatus,
   CommunicationChannel,
@@ -16,6 +17,7 @@ import type {
   InfoCategory,
   Priority,
   PromiseStatus,
+  RecoveryIssueType,
   RetentionCategory,
   User,
 } from "@/generated/prisma/client";
@@ -481,6 +483,215 @@ export async function resolvePromise(formData: FormData) {
     entityId: promiseId,
     clientId,
     summary: `Promise ${outcome === "KEPT" ? "kept" : "missed"}: ${existing.description}`,
+  });
+  revalidate(clientId);
+}
+
+// --- Appointments & door-to-door logistics (plan §6.7, white-glove #7) --------
+
+export async function addAppointment(
+  clientId: string,
+  _prev: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const auth = await authorize(clientId);
+  if (!auth) return errState("You are not authorized for this action.");
+  const { user } = auth;
+
+  const purpose = str(formData, "purpose");
+  if (!purpose) return errState("Enter a neutral appointment title (no clinical detail).");
+
+  const appt = await prisma.appointment.create({
+    data: {
+      clientId,
+      purpose,
+      providerName: str(formData, "providerName") || null,
+      scheduledAt: date(formData, "scheduledAt"),
+      location: str(formData, "location") || null,
+      accessibilityArrangements: str(formData, "accessibilityArrangements") || null,
+      transportation: str(formData, "transportation") || null,
+      companion: str(formData, "companion") || null,
+      whatToBring: str(formData, "whatToBring") || null,
+      clientQuestions: str(formData, "clientQuestions") || null,
+      createdById: user.id,
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "CREATE",
+    entityType: "Appointment",
+    entityId: appt.id,
+    clientId,
+    summary: `Added appointment "${purpose}".`,
+  });
+  revalidate(clientId);
+  return { ok: true };
+}
+
+/** Update an appointment's door-to-door checklist, status, and outcome (coordination facts only). */
+export async function updateAppointment(formData: FormData) {
+  const auth = await authorize(str(formData, "clientId"));
+  if (!auth) return;
+  const { user, clientId } = auth;
+  const id = str(formData, "appointmentId");
+  const existing = await prisma.appointment.findFirst({ where: { id, clientId } });
+  if (!existing) return;
+
+  await prisma.appointment.update({
+    where: { id },
+    data: {
+      status: (str(formData, "status") || existing.status) as AppointmentStatus,
+      locationConfirmed: str(formData, "locationConfirmed") === "on",
+      transportConfirmed: str(formData, "transportConfirmed") === "on",
+      documentsReady: str(formData, "documentsReady") === "on",
+      questionsPrepared: str(formData, "questionsPrepared") === "on",
+      backupPlanned: str(formData, "backupPlanned") === "on",
+      outcomeNote: str(formData, "outcomeNote") || null,
+      followUpAction: str(formData, "followUpAction") || null,
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "UPDATE",
+    entityType: "Appointment",
+    entityId: id,
+    clientId,
+    summary: `Updated appointment "${existing.purpose}".`,
+  });
+  revalidate(clientId);
+}
+
+// --- Warm handoff (white-glove #5) --------------------------------------------
+
+export async function addHandoff(
+  clientId: string,
+  _prev: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const auth = await authorize(clientId);
+  if (!auth) return errState("You are not authorized for this action.");
+  const { user } = auth;
+
+  const reason = str(formData, "reason");
+  const toName = str(formData, "toName");
+  if (!reason) return errState("State why another person is becoming involved.");
+  if (!toName) return errState("Name who is receiving the work.");
+
+  const handoff = await prisma.handoff.create({
+    data: { clientId, reason, toName, commitment: str(formData, "commitment") || null, createdById: user.id },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "CREATE",
+    entityType: "Handoff",
+    entityId: handoff.id,
+    clientId,
+    summary: `Started a warm handoff to ${toName}.`,
+  });
+  revalidate(clientId);
+  return { ok: true };
+}
+
+/** Update a handoff's 8-step checklist and optionally complete it. */
+export async function updateHandoff(formData: FormData) {
+  const auth = await authorize(str(formData, "clientId"));
+  if (!auth) return;
+  const { user, clientId } = auth;
+  const id = str(formData, "handoffId");
+  const existing = await prisma.handoff.findFirst({ where: { id, clientId } });
+  if (!existing) return;
+
+  const complete = str(formData, "complete") === "1";
+  await prisma.handoff.update({
+    where: { id },
+    data: {
+      permissionObtained: str(formData, "permissionObtained") === "on",
+      introduced: str(formData, "introduced") === "on",
+      contextTransferred: str(formData, "contextTransferred") === "on",
+      accepted: str(formData, "accepted") === "on",
+      primaryOwnerVisible: str(formData, "primaryOwnerVisible") === "on",
+      followedUp: str(formData, "followedUp") === "on",
+      commitment: str(formData, "commitment") || existing.commitment,
+      completedAt: complete ? new Date() : existing.completedAt,
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "UPDATE",
+    entityType: "Handoff",
+    entityId: id,
+    clientId,
+    summary: complete ? `Completed warm handoff to ${existing.toName}.` : `Updated warm handoff to ${existing.toName}.`,
+  });
+  revalidate(clientId);
+}
+
+// --- Service recovery (white-glove #6) ----------------------------------------
+
+export async function addRecovery(
+  clientId: string,
+  _prev: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const auth = await authorize(clientId);
+  if (!auth) return errState("You are not authorized for this action.");
+  const { user } = auth;
+
+  const issueType = str(formData, "issueType") as RecoveryIssueType;
+  const description = str(formData, "description");
+  if (!issueType) return errState("Choose an issue type.");
+  if (!description) return errState("Describe the experience failure.");
+
+  const rec = await prisma.serviceRecovery.create({
+    data: {
+      clientId,
+      issueType,
+      description,
+      acknowledgement: str(formData, "acknowledgement") || null,
+      ownerId: user.id, // one person takes ownership
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "CREATE",
+    entityType: "ServiceRecovery",
+    entityId: rec.id,
+    clientId,
+    summary: `Opened service recovery: ${issueType}.`,
+  });
+  revalidate(clientId);
+  return { ok: true };
+}
+
+/** Record the recovery plan and resolve once the client confirms it feels resolved. */
+export async function resolveRecovery(formData: FormData) {
+  const auth = await authorize(str(formData, "clientId"));
+  if (!auth) return;
+  const { user, clientId } = auth;
+  const id = str(formData, "recoveryId");
+  const existing = await prisma.serviceRecovery.findFirst({ where: { id, clientId } });
+  if (!existing) return;
+
+  const resolve = str(formData, "resolve") === "1";
+  await prisma.serviceRecovery.update({
+    where: { id },
+    data: {
+      explanation: str(formData, "explanation") || null,
+      recoveryPlan: str(formData, "recoveryPlan") || null,
+      revisedCommitment: str(formData, "revisedCommitment") || null,
+      goodwillAction: str(formData, "goodwillAction") || null,
+      learningNote: str(formData, "learningNote") || null,
+      resolvedConfirmedWithClient: str(formData, "resolvedConfirmedWithClient") === "on",
+      resolvedAt: resolve ? new Date() : existing.resolvedAt,
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "UPDATE",
+    entityType: "ServiceRecovery",
+    entityId: id,
+    clientId,
+    summary: resolve ? `Resolved service recovery: ${existing.issueType}.` : `Updated service recovery: ${existing.issueType}.`,
   });
   revalidate(clientId);
 }

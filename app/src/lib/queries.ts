@@ -31,7 +31,7 @@ export async function getExceptions(user: Pick<User, "id" | "role">, now: Date =
   const clientScope = canViewAllClients(user.role) ? {} : { assignedNavigatorId: user.id };
   const itemScope = { plan: { is: { client: { is: clientScope } } } };
 
-  const [overdue, blocked, awaitingApproval, activeConsents, pendingChanges, pendingExpenses, contactDue, promisesDue] = await Promise.all([
+  const [overdue, blocked, awaitingApproval, activeConsents, pendingChanges, pendingExpenses, contactDue, promisesDue, upcomingAppointments, openRecoveries] = await Promise.all([
     prisma.actionItem.findMany({
       where: { dueDate: { lt: now }, status: { not: "DONE" }, ...itemScope },
       include: { plan: { include: { client: { select: { id: true, displayName: true } } } } },
@@ -69,11 +69,25 @@ export async function getExceptions(user: Pick<User, "id" | "role">, now: Date =
       include: { client: { select: { id: true, displayName: true } } },
       orderBy: { dueAt: "asc" },
     }),
+    prisma.appointment.findMany({
+      where: {
+        status: { in: ["REQUESTED", "CONFIRMED"] },
+        scheduledAt: { not: null, gte: now, lte: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) },
+        client: { is: clientScope },
+      },
+      include: { client: { select: { id: true, displayName: true } } },
+      orderBy: { scheduledAt: "asc" },
+    }),
+    prisma.serviceRecovery.findMany({
+      where: { resolvedAt: null, client: { is: clientScope } },
+      include: { client: { select: { id: true, displayName: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
 
   const expiring = activeConsents.filter((c) => consentStatus(c, now) === "ACTIVE");
 
-  return { overdue, blocked, awaitingApproval, expiring, pendingChanges, pendingExpenses, contactDue, promisesDue };
+  return { overdue, blocked, awaitingApproval, expiring, pendingChanges, pendingExpenses, contactDue, promisesDue, upcomingAppointments, openRecoveries };
 }
 
 /**
@@ -87,6 +101,9 @@ export async function getClientDetail(id: string, user: Pick<User, "id" | "role"
       assignedNavigator: true,
       backupNavigator: { select: { name: true } },
       promises: { include: { createdBy: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
+      appointments: { orderBy: { scheduledAt: "asc" } },
+      handoffs: { include: { createdBy: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
+      serviceRecoveries: { include: { owner: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
       inquiry: { include: { handledBy: { select: { name: true } } } },
       screening: { include: { screenedBy: { select: { name: true } } } },
       agreement: true,

@@ -1,8 +1,10 @@
 // Human-readable labels for enum values and small formatting helpers.
 import type {
   ActionStatus,
+  AppointmentStatus,
   ApprovalStatus,
   ChangeStatus,
+  RecoveryIssueType,
   ClientStatus,
   CommunicationChannel,
   ConsentType,
@@ -115,6 +117,25 @@ export const promiseStatusLabel: Record<PromiseStatus, string> = {
   OPEN: "Open",
   KEPT: "Kept",
   MISSED: "Missed",
+};
+
+export const appointmentStatusLabel: Record<AppointmentStatus, string> = {
+  REQUESTED: "Requested",
+  CONFIRMED: "Confirmed",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
+
+export const recoveryIssueTypeLabel: Record<RecoveryIssueType, string> = {
+  MISSED_CALLBACK: "Missed callback",
+  CONFUSING_MESSAGE: "Confusing message",
+  PROVIDER_CANCELLATION: "Provider cancellation",
+  DELAY: "Unexpected delay",
+  REPEATED_REQUEST: "Repeated request",
+  BILLING_SURPRISE: "Billing surprise",
+  POOR_HANDOFF: "Poor handoff",
+  FELT_UNHEARD: "Client felt unheard",
+  OTHER: "Other",
 };
 
 export const incidentTypeLabel: Record<IncidentType, string> = {
