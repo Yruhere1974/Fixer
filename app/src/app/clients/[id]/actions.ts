@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { recordAudit } from "@/lib/audit";
 import { recordDisclosure } from "@/lib/consent";
-import { requireActor } from "@/lib/session";
+import { requireUser } from "@/lib/session";
+import { canAccessClient, canCoordinate } from "@/lib/access";
 import type { CommunicationChannel, InfoCategory } from "@/generated/prisma/client";
 
 export interface DisclosureFormState {
@@ -15,15 +16,24 @@ export interface DisclosureFormState {
 }
 
 /**
- * Attempt a family-update disclosure. Always runs through the consent guard; a refusal is
- * recorded and audited just like a success (plan §3.2, §6.3). Wired to useActionState.
+ * Attempt a family-update disclosure. Server Actions are directly reachable, so authentication,
+ * coordination capability, and client-access are all re-checked here — never trust the UI (§8.4,
+ * ADR 0003). Always runs through the consent guard; a refusal is recorded and audited (§3.2, §6.3).
  */
 export async function attemptDisclosure(
   clientId: string,
   _prev: DisclosureFormState | null,
   formData: FormData,
 ): Promise<DisclosureFormState> {
-  const actor = await requireActor();
+  const user = await requireUser();
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { assignedNavigatorId: true },
+  });
+  if (!client || !canCoordinate(user.role) || !canAccessClient(user, client)) {
+    return { ok: false, allowed: false, message: "You are not authorized for this action.", warnings: [] };
+  }
+
   const category = String(formData.get("category")) as InfoCategory;
   const channel = String(formData.get("channel")) as CommunicationChannel;
   const recipientContactId = String(formData.get("recipientContactId") || "") || null;
@@ -51,7 +61,7 @@ export async function attemptDisclosure(
     recipientName: recipient.name,
     infoSummary,
     purpose,
-    senderId: actor.id,
+    senderId: user.id,
   });
 
   revalidatePath(`/clients/${clientId}`);
@@ -65,48 +75,49 @@ export async function attemptDisclosure(
   };
 }
 
-/** Approve an action item's cost/scope (plan §6.5 client-approval status). */
+/** Approve an action item's cost/scope (plan §6.5). Re-checks capability + client access. */
 export async function approveActionItem(formData: FormData) {
-  const actor = await requireActor();
+  const user = await requireUser();
   const itemId = String(formData.get("itemId"));
 
-  const item = await prisma.actionItem.update({
+  const existing = await prisma.actionItem.findUnique({
+    where: { id: itemId },
+    include: { plan: { include: { client: { select: { id: true, assignedNavigatorId: true } } } } },
+  });
+  if (!existing || !canCoordinate(user.role) || !canAccessClient(user, existing.plan.client)) return;
+
+  await prisma.actionItem.update({
     where: { id: itemId },
     data: { approvalStatus: "APPROVED", status: "IN_PROGRESS" },
-    include: { plan: true },
   });
 
   await recordAudit({
-    actorId: actor.id,
+    actorId: user.id,
     action: "APPROVE",
     entityType: "ActionItem",
-    entityId: item.id,
-    clientId: item.plan.clientId,
-    summary: `Approved action "${item.title}".`,
+    entityId: itemId,
+    clientId: existing.plan.clientId,
+    summary: `Approved action "${existing.title}".`,
   });
 
-  revalidatePath(`/clients/${item.plan.clientId}`);
+  revalidatePath(`/clients/${existing.plan.clientId}`);
 }
 
 /**
- * Mark an action item done. Requires evidence of completion (plan §3.9: "require evidence
- * before completion") — an item cannot be closed on an empty result.
+ * Mark an action item done. Requires evidence of completion (plan §3.9). Re-checks capability +
+ * client access before writing.
  */
 export async function completeActionItem(formData: FormData) {
-  const actor = await requireActor();
+  const user = await requireUser();
   const itemId = String(formData.get("itemId"));
   const evidence = String(formData.get("evidence") || "").trim();
 
   const existing = await prisma.actionItem.findUnique({
     where: { id: itemId },
-    include: { plan: true },
+    include: { plan: { include: { client: { select: { id: true, assignedNavigatorId: true } } } } },
   });
-  if (!existing) return;
-
-  if (!evidence) {
-    // No evidence -> refuse to close. Surfaced by the disabled-submit UI; guarded here too.
-    return;
-  }
+  if (!existing || !canCoordinate(user.role) || !canAccessClient(user, existing.plan.client)) return;
+  if (!evidence) return; // no evidence -> refuse to close (guarded in UI too)
 
   await prisma.actionItem.update({
     where: { id: itemId },
@@ -114,7 +125,7 @@ export async function completeActionItem(formData: FormData) {
   });
 
   await recordAudit({
-    actorId: actor.id,
+    actorId: user.id,
     action: "UPDATE",
     entityType: "ActionItem",
     entityId: itemId,

@@ -3,6 +3,7 @@ import { Badge } from "@/components/badge";
 import { getExceptions, listClients } from "@/lib/queries";
 import { clientStatusLabel, consentTypeLabel, formatDate } from "@/lib/labels";
 import type { ClientStatus } from "@/generated/prisma/client";
+import { requireUser } from "@/lib/session";
 
 // Reads live data every request; must not be statically prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -15,7 +16,8 @@ const statusTone: Record<ClientStatus, "gray" | "green" | "amber" | "blue"> = {
 };
 
 export default async function DashboardPage() {
-  const [clients, exceptions] = await Promise.all([listClients(), getExceptions()]);
+  const user = await requireUser();
+  const [clients, exceptions] = await Promise.all([listClients(user), getExceptions(user)]);
   const exceptionCount =
     exceptions.overdue.length +
     exceptions.blocked.length +

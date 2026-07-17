@@ -21,6 +21,23 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Authentication + §5 role enforcement (ADR 0003):** Replaced the
+  placeholder actor with real auth: email + password (scrypt), DB-backed **revocable**
+  sessions (httpOnly cookie), a Next 16 `proxy.ts` for optimistic redirects, and a
+  server-side Data Access Layer (`requireUser`). Enforced the §5 access model
+  (`lib/access.ts`): Founder/Lead Navigator/Privacy Lead see all clients; Navigator/
+  Assistant see only assigned clients; coordination mutations gated to those roles;
+  Bookkeeper/Reviewer/External Advisor have no client access. Scoping is applied in
+  the query and re-checked in every server action (defence-in-depth). Login/logout UI
+  + header user badge added. Seed now sets a dev password (`password123`) for all
+  fictional staff and adds a second navigator + a bookkeeper for testing.
+  - **Verification:** Playwright end-to-end — unauthenticated redirects to /login;
+    founder sees all; an unassigned navigator does NOT see the client and a direct URL
+    returns not-found; the assigned navigator sees it and can coordinate; the
+    bookkeeper sees nothing, is denied direct access, and has no coordinate controls.
+    typecheck + lint + build clean.
+  - **Version:** Committed on `develop`. Follow-ups: hash session tokens at rest,
+    password reset, lockout/rate-limiting, MFA for Founder/Privacy Lead, user-admin UI.
 - **2026-07-16 — Full dockerization (separate containers):** The app and database
   now run as separate containers via `app/docker-compose.yml`: `fixer-app` (Next.js
   `standalone` image, own multi-stage `Dockerfile`, non-root, port 3000), `fixer-db`

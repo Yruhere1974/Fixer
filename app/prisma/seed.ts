@@ -5,26 +5,29 @@
  */
 import { evaluateDisclosure, recordDisclosure } from "@/lib/consent";
 import { prisma } from "@/lib/db";
+import { hashPassword } from "@/lib/password";
 
 const FICTIONAL_MARKER = "[FICTIONAL]";
+const DEV_PASSWORD = "password123"; // fictional/dev only
 
 async function main() {
-  // --- Staff (plan §5): individual accounts, distinct roles ---
-  await prisma.user.upsert({
-    where: { email: "founder@fixer.local" },
-    update: {},
-    create: { email: "founder@fixer.local", name: "Founder (fictional)", role: "FOUNDER" },
-  });
-  const navigator = await prisma.user.upsert({
-    where: { email: "navigator@fixer.local" },
-    update: {},
-    create: { email: "navigator@fixer.local", name: "Navigator (fictional)", role: "NAVIGATOR" },
-  });
-  await prisma.user.upsert({
-    where: { email: "privacy@fixer.local" },
-    update: {},
-    create: { email: "privacy@fixer.local", name: "Privacy Lead (fictional)", role: "PRIVACY_LEAD" },
-  });
+  // --- Staff (plan §5): individual accounts, distinct roles. All share a dev password. ---
+  const passwordHash = await hashPassword(DEV_PASSWORD);
+  const staff = [
+    { email: "founder@fixer.local", name: "Founder (fictional)", role: "FOUNDER" as const },
+    { email: "navigator@fixer.local", name: "Navigator (fictional)", role: "NAVIGATOR" as const },
+    { email: "navigator2@fixer.local", name: "Second Navigator (fictional)", role: "NAVIGATOR" as const },
+    { email: "privacy@fixer.local", name: "Privacy Lead (fictional)", role: "PRIVACY_LEAD" as const },
+    { email: "bookkeeper@fixer.local", name: "Bookkeeper (fictional)", role: "BOOKKEEPER" as const },
+  ];
+  for (const s of staff) {
+    await prisma.user.upsert({
+      where: { email: s.email },
+      update: { passwordHash, name: s.name, role: s.role, active: true },
+      create: { ...s, passwordHash },
+    });
+  }
+  const navigator = await prisma.user.findUniqueOrThrow({ where: { email: "navigator@fixer.local" } });
 
   // --- Reset any prior fictional client so the seed is idempotent ---
   await prisma.client.deleteMany({ where: { displayName: { startsWith: FICTIONAL_MARKER } } });

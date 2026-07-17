@@ -141,13 +141,16 @@ enum AuditAction {
 // ---------------------------------------------------------------------------
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  role      Role
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         Role
+  active       Boolean  @default(true)
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions     Session[]
 
   assignedClients Client[]         @relation("assignedNavigator")
   handledInquiries Inquiry[]
@@ -160,6 +163,18 @@ model User {
   auditEvents     AuditEvent[]
 
   @@index([role])
+}
+
+/// DB-backed, revocable session (ADR 0003). Deleting a row logs the user out immediately (§8.4).
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // ---------------------------------------------------------------------------

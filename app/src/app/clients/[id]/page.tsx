@@ -4,6 +4,8 @@ import { Badge } from "@/components/badge";
 import { DisclosureForm } from "./disclosure-form";
 import { approveActionItem, completeActionItem } from "./actions";
 import { getClientDetail } from "@/lib/queries";
+import { requireUser } from "@/lib/session";
+import { canCoordinate } from "@/lib/access";
 import { consentStatus, type ConsentStatus } from "@/lib/consent";
 import {
   actionStatusLabel,
@@ -38,8 +40,10 @@ const actionTone: Record<ActionStatus, "gray" | "blue" | "amber" | "green"> = {
 
 export default async function ClientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const client = await getClientDetail(id);
+  const user = await requireUser();
+  const client = await getClientDetail(id, user);
   if (!client) notFound();
+  const mayCoordinate = canCoordinate(user.role);
 
   return (
     <div className="space-y-8">
@@ -182,7 +186,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                     </div>
                   )}
 
-                  {item.status !== "DONE" && (
+                  {item.status !== "DONE" && mayCoordinate && (
                     <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-outline-variant/40 pt-4">
                       {item.approvalStatus === "PENDING" && (
                         <form action={approveActionItem}>
@@ -220,7 +224,12 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
 
       {/* Disclosure guard */}
       <Section title="Family update — consent guard">
-        {client.approvedContacts.length === 0 ? (
+        {!mayCoordinate ? (
+          <p className="text-sm text-on-surface-variant/70">
+            Your role has read-only access to this client; disclosures are performed by an assigned
+            navigator.
+          </p>
+        ) : client.approvedContacts.length === 0 ? (
           <p className="text-sm text-on-surface-variant/70">No approved contacts recorded.</p>
         ) : (
           <DisclosureForm
