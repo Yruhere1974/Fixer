@@ -21,6 +21,22 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Secure destruction execution (§8.8, journey step 14):** Built the last
+  software gap. `DestructionRecord` tombstone model (neutral label + opaque former-id ref +
+  retention rule + method + who/when — **no content**) + migration. A `/retention` page
+  (gated `canHandlePrivacy`) lists records past their retention review date, split into
+  **eligible** and **on hold** (blocked by legal hold, an open incident, or an open privacy
+  request). `destroyClientRecord` re-checks eligibility server-side, writes the tombstone,
+  and deletes the client — cascading the coordination content while the audit, incident, and
+  privacy registers survive (verified: those FKs are ON DELETE SET NULL). Dashboard exception
+  "Records due for destruction"; Retention nav link; seeded an eligible + a legal-hold client.
+  Closes journey step 14 → ✅. **The platform is now feature-complete against the software
+  plan (all 15 journey steps fully operable).**
+  - **Verification:** Playwright (`scripts/retention-e2e.mjs`) — eligible + on-hold render;
+    destroying the eligible record is confirmed in the DB (client deleted, content-free
+    tombstone written, DELETE audit preserved with clientId nulled), and the legal-hold record
+    stays preserved. typecheck + lint + build clean; containers rebuilt.
+  - **Version:** Committed on `develop`; tagged the release.
 - **2026-07-16 — Handoff / closeout export (§6.14, journey step 13):** Built the client
   handoff package. `Client.maintenanceGuidance` field (+migration), captured on the closeout
   form. A print-ready `/clients/[id]/handoff` page assembles the package (outcome, completed

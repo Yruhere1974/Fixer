@@ -55,7 +55,10 @@ export default async function RootLayout({
                   <Link href="/incidents/new" className="hover:text-primary">Report incident</Link>
                 ) : null}
                 {canHandlePrivacy(user.role) && (
-                  <Link href="/privacy" className="hover:text-primary">Privacy</Link>
+                  <>
+                    <Link href="/privacy" className="hover:text-primary">Privacy</Link>
+                    <Link href="/retention" className="hover:text-primary">Retention</Link>
+                  </>
                 )}
                 {canManageBilling(user.role) && (
                   <Link href="/invoices" className="hover:text-primary">Invoices</Link>

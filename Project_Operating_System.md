@@ -492,7 +492,7 @@ flowchart TD
     S11 --> S12{12. Material scope<br/>or cost change?}:::ok
     S12 -- Yes --> S8
     S12 -- No --> S13[13. Final summary,<br/>provider list, handoff]:::ok
-    S13 --> S14[14. Retention / return /<br/>secure destruction]:::partial
+    S13 --> S14[14. Retention / return /<br/>secure destruction]:::ok
     S14 --> S15[15. Feedback +<br/>close or renew]:::ok
 
     classDef ok fill:#d7f5e3,stroke:#2f7d54,color:#0f3d26;
@@ -515,7 +515,7 @@ flowchart TD
 | 11 | Updates to approved recipients only | ✅ | **Consent guard** permits/blocks each disclosure by scope, channel, recipient, expiry, withdrawal — recording both outcomes. |
 | 12 | Approve material scope/cost changes | ✅ | Change-request log with impact assessment (service/schedule/cost/privacy) and approve/reject decisions; pending requests surface in the exception view. |
 | 13 | Final summary, provider list, handoff | ✅ | Print-ready handoff package (outcome, completed + outstanding items, decisions, costs, retention, maintenance guidance) with a downloadable Markdown export (audited). |
-| 14 | Retention / return / secure destruction | 🟡 | Retention category + review date set at closeout; legal-hold field; no destruction execution/scheduler. |
+| 14 | Retention / return / secure destruction | ✅ | Retention page lists records past their review date; destruction is blocked by legal hold / open incident / open privacy request, and executing it deletes the content, keeps a content-free tombstone (rule, method, who, when), and preserves the audit/incident/privacy registers. |
 | 15 | Feedback + close or renew | ✅ | Closeout captures feedback and closes; status control reactivates (renew). |
 
 **Cross-cutting controls in place** (support §5, §14, §17.14–17.15): individual accounts +
@@ -528,17 +528,19 @@ service fees, neutral invoices with a draft→sent→paid lifecycle, no health d
 (§6.10 — question, options, decision, decision-maker, reason, affected tasks); and the **daily exception
 view** (overdue, awaiting approval, blocked, expiring permissions, change requests pending, expenses
 awaiting approval, providers to verify/review, incidents to review/correct, privacy requests overdue,
-invoices overdue); and the **closeout handoff package** (§6.14 — a print-ready summary with a
-downloadable, audited Markdown export). **Not yet built:** secure-destruction execution (§8.8).
+invoices overdue, records due for destruction); the **closeout handoff package** (§6.14 — a print-ready
+summary with a downloadable, audited Markdown export); and **retention & secure destruction** (§8.8 —
+destruction blocked by legal hold / open incident / open privacy request; execution deletes content,
+keeps a content-free tombstone, and preserves the audit/incident/privacy registers).
 
-**Summary:** every one of the 15 journey steps is now at least partially operable through the UI, and
-**14 of 15 are fully supported** — a navigator can create an engagement, record the agreement and
-intake, manage consents and approved contacts, research and verify providers, author the action plan,
-run consent-gated updates, log decisions and scope/cost changes, bill expenses and service fees, close
-out, and hand the client a summary package — all attributed in the audit trail. The one remaining
-partial is secure-destruction execution (14 — retention rules are set but the destruction schedule is
-not yet run). None of this satisfies the §17.8 hard launch gate, which remains open (licensing,
-insurance, legal/privacy review, the fictional-client tabletop test, etc.).
+**Summary:** **all 15 journey steps are now fully operable through the UI** — a navigator can create an
+engagement, record the agreement and intake, manage consents and approved contacts, research and verify
+providers, author the action plan, run consent-gated updates, log decisions and scope/cost changes, bill
+expenses and service fees, close out, hand the client a summary package, and securely destroy records at
+end of retention — all attributed in the audit trail. The platform is now **feature-complete against the
+software plan** (a dedicated emergency-triage workflow beyond the safety screen remains a possible
+refinement). None of this satisfies the §17.8 hard launch gate, which is entirely off-software:
+licensing, insurance, legal/privacy review, and the fictional-client tabletop test.
 
 ### 17.5 Safety, Safeguarding, and Incident Control
 

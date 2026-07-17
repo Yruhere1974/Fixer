@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/badge";
-import { getExceptions, getIncidentExceptions, getInvoiceExceptions, getPrivacyExceptions, getProviderExceptions, listClients } from "@/lib/queries";
+import { getExceptions, getIncidentExceptions, getInvoiceExceptions, getPrivacyExceptions, getProviderExceptions, getRetentionCandidates, listClients } from "@/lib/queries";
 import { clientStatusLabel, consentTypeLabel, formatDate, incidentTypeLabel, money, privacyRequestTypeLabel, serviceCategoryLabel } from "@/lib/labels";
 import type { ClientStatus } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/session";
@@ -22,13 +22,14 @@ export default async function DashboardPage() {
   const handleIncidents = canHandleIncidents(user.role);
   const handlePrivacy = canHandlePrivacy(user.role);
   const manageBilling = canManageBilling(user.role);
-  const [clients, exceptions, providerExceptions, incidentExceptions, privacyOverdue, invoicesOverdue] = await Promise.all([
+  const [clients, exceptions, providerExceptions, incidentExceptions, privacyOverdue, invoicesOverdue, retention] = await Promise.all([
     listClients(user),
     getExceptions(user),
     manageDirectory ? getProviderExceptions() : Promise.resolve({ pending: [], due: [] }),
     handleIncidents ? getIncidentExceptions() : Promise.resolve({ reviewDue: [], correctiveOverdue: [] }),
     handlePrivacy ? getPrivacyExceptions() : Promise.resolve([]),
     manageBilling ? getInvoiceExceptions() : Promise.resolve([]),
+    handlePrivacy ? getRetentionCandidates() : Promise.resolve({ eligible: [], onHold: [] }),
   ]);
   const providerAttention = [...providerExceptions.pending, ...providerExceptions.due];
   const incidentAttention = Array.from(
@@ -44,7 +45,8 @@ export default async function DashboardPage() {
     providerAttention.length +
     incidentAttention.length +
     privacyOverdue.length +
-    invoicesOverdue.length;
+    invoicesOverdue.length +
+    retention.eligible.length;
 
   return (
     <div className="space-y-10">
@@ -176,6 +178,18 @@ export default async function DashboardPage() {
                 href: `/privacy/${r.id}`,
                 label: privacyRequestTypeLabel[r.type],
                 meta: `${r.requesterName} · due ${formatDate(r.responseDueDate)}`,
+              }))}
+            />
+          )}
+          {handlePrivacy && (
+            <ExceptionCard
+              title="Records due for destruction"
+              tone="amber"
+              items={retention.eligible.map((c) => ({
+                id: c.id,
+                href: `/retention`,
+                label: c.displayName,
+                meta: `retention review ${formatDate(c.retentionReviewDate)}`,
               }))}
             />
           )}

@@ -265,6 +265,7 @@ model User {
   decidedExpenses  Expense[]        @relation("expenseDecider")
   createdInvoices  Invoice[]        @relation("invoiceCreator")
   recordedDecisions Decision[]      @relation("decisionRecorder")
+  destructions     DestructionRecord[] @relation("destroyer")
 
   @@index([role])
 }
@@ -768,6 +769,23 @@ model Decision {
   updatedAt        DateTime @updatedAt
 
   @@index([clientId])
+}
+
+/// A destruction tombstone (plan §8.8): records that a record was securely destroyed — under which
+/// retention rule, by whom, and when — WITHOUT retaining the destroyed content itself. The subject
+/// reference is an opaque former id, not the client's information.
+model DestructionRecord {
+  id                String            @id @default(cuid())
+  subjectLabel      String                              // neutral descriptor, e.g. "Client coordination record"
+  subjectRef        String                              // opaque former id — not content
+  retentionCategory RetentionCategory?
+  method            String?                             // e.g. "Deleted from workspace"
+  note              String?
+  destroyedBy       User?             @relation("destroyer", fields: [destroyedById], references: [id])
+  destroyedById     String?
+  destroyedAt       DateTime          @default(now())
+
+  @@index([destroyedAt])
 }
 
 model InvoiceItem {

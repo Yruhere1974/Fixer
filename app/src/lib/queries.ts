@@ -182,6 +182,44 @@ export async function getInvoiceExceptions(now: Date = new Date()) {
   });
 }
 
+// --- Retention & secure destruction (§8.8) -----------------------------------
+
+/**
+ * Records whose retention review date has passed, split into those eligible for destruction and
+ * those on hold. Destruction is stopped by a legal hold, an open incident, or an open privacy
+ * request (§8.8 — preserve until authorized).
+ */
+export async function getRetentionCandidates(now: Date = new Date()) {
+  const candidates = await prisma.client.findMany({
+    where: { retentionReviewDate: { not: null, lte: now } },
+    include: {
+      incidents: { select: { status: true } },
+      privacyRequests: { select: { status: true } },
+    },
+    orderBy: { retentionReviewDate: "asc" },
+  });
+
+  const eligible: typeof candidates = [];
+  const onHold: { client: (typeof candidates)[number]; reasons: string[] }[] = [];
+  for (const c of candidates) {
+    const reasons: string[] = [];
+    if (c.legalHold) reasons.push("Legal hold");
+    if (c.incidents.some((i) => i.status !== "CLOSED")) reasons.push("Open incident");
+    if (c.privacyRequests.some((p) => p.status !== "COMPLETED")) reasons.push("Open privacy request");
+    if (reasons.length) onHold.push({ client: c, reasons });
+    else eligible.push(c);
+  }
+  return { eligible, onHold };
+}
+
+export async function listDestructions() {
+  return prisma.destructionRecord.findMany({
+    orderBy: { destroyedAt: "desc" },
+    take: 50,
+    include: { destroyedBy: { select: { name: true } } },
+  });
+}
+
 // --- Privacy requests (§6.13) ------------------------------------------------
 
 export async function listPrivacyRequests() {

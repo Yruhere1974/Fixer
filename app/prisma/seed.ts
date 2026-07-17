@@ -270,6 +270,29 @@ async function main() {
     },
   });
 
+  // --- A closed client past its retention date, eligible for destruction (§8.8) ---
+  await prisma.client.create({
+    data: {
+      displayName: `${FICTIONAL_MARKER} Past Client (retention due)`,
+      status: "CLOSED",
+      closedAt: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000),
+      assignedNavigatorId: navigator.id,
+      retentionCategory: "STANDARD_SERVICE",
+      retentionReviewDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // past -> eligible
+    },
+  });
+  await prisma.client.create({
+    data: {
+      displayName: `${FICTIONAL_MARKER} Held Client (legal hold)`,
+      status: "CLOSED",
+      closedAt: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000),
+      assignedNavigatorId: navigator.id,
+      retentionCategory: "INCIDENT_LEGAL",
+      retentionReviewDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      legalHold: true, // past review date but preserved -> on hold
+    },
+  });
+
   // --- Prove the guard both ways (this is the slice-1 verification) ---
   console.log(`\nSeeded fictional client ${client.displayName} (${client.id})\n`);
 
