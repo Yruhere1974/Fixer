@@ -54,3 +54,11 @@ const HANDLE_PRIVACY: Role[] = ["FOUNDER", "PRIVACY_LEAD"];
 export function canHandlePrivacy(role: Role): boolean {
   return HANDLE_PRIVACY.includes(role);
 }
+
+// Billing is a finance function (§5) — the bookkeeper sees neutral invoices, not client health data.
+const MANAGE_BILLING: Role[] = ["FOUNDER", "LEAD_NAVIGATOR", "BOOKKEEPER"];
+
+/** May this role manage invoices? Founder, lead navigator, bookkeeper. */
+export function canManageBilling(role: Role): boolean {
+  return MANAGE_BILLING.includes(role);
+}

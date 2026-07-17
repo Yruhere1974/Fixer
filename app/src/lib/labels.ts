@@ -6,7 +6,10 @@ import type {
   ClientStatus,
   CommunicationChannel,
   ConsentType,
+  ExpenseStatus,
   FitDecision,
+  InvoiceItemKind,
+  InvoiceStatus,
   IncidentStatus,
   IncidentType,
   InfoCategory,
@@ -142,6 +145,24 @@ export const privacyRequestStatusLabel: Record<PrivacyRequestStatus, string> = {
   IN_PROGRESS: "In progress",
   COMPLETED: "Completed",
   ESCALATED: "Escalated",
+};
+
+export const expenseStatusLabel: Record<ExpenseStatus, string> = {
+  REQUESTED: "Requested",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+export const invoiceStatusLabel: Record<InvoiceStatus, string> = {
+  DRAFT: "Draft",
+  SENT: "Sent",
+  PAID: "Paid",
+  VOID: "Void",
+};
+
+export const invoiceItemKindLabel: Record<InvoiceItemKind, string> = {
+  SERVICE_FEE: "Service fee",
+  THIRD_PARTY_EXPENSE: "Third-party expense",
 };
 
 export const serviceCategoryLabel: Record<ServiceCategory, string> = {

@@ -511,7 +511,7 @@ flowchart TD
 | 7 | Research options + verify credentials | ✅ | Provider directory with search/filter, credential verification (source + date + reviewer), periodic review + stale marking. Per-client shortlist linking into the plan is a refinement. |
 | 8 | Present written action plan | ✅ | Create plan + add action items (owner/priority/due/cost/backup/next action). |
 | 9 | Client approval before coordinating/costs | ✅ | Approve action + evidence-gated completion. |
-| 10 | Track actions, dates, decisions, unresolved | 🟡 | Action tracking, audit trail, and daily exception view work; no decision/change log or expenses/invoices. |
+| 10 | Track actions, dates, decisions, unresolved | 🟡 | Action tracking, audit trail, exception view, and billing (expenses + invoices) work; no separate decision log yet. |
 | 11 | Updates to approved recipients only | ✅ | **Consent guard** permits/blocks each disclosure by scope, channel, recipient, expiry, withdrawal — recording both outcomes. |
 | 12 | Approve material scope/cost changes | ✅ | Change-request log with impact assessment (service/schedule/cost/privacy) and approve/reject decisions; pending requests surface in the exception view. |
 | 13 | Final summary, provider list, handoff | 🟡 | Closeout captures retention + feedback and closes; no exportable handoff/summary package. |
@@ -523,10 +523,12 @@ role-based access with assignment scoping (auth, ADR 0003); an attributable **au
 mutation and disclosure; the **incident / complaint register** (§6.12, §17.5 — restricted access, 48-hour
 review clock, corrective-action verification required before closure); the **privacy-request register**
 (§6.13 — access/correction/withdrawal/complaint/export, identity verification required before completion,
-response-due tracking); and the **daily exception view** (overdue, awaiting approval, blocked, expiring
-permissions, change requests pending, providers to verify/review, incidents to review/correct, **privacy
-requests overdue**). **Not yet built:** invoicing/expenses (§6.11), and a destruction/handoff-export
-lifecycle.
+response-due tracking); **billing** (§6.11 — client-approved third-party expenses kept separate from
+service fees, neutral invoices with a draft→sent→paid lifecycle, no health detail); and the **daily
+exception view** (overdue, awaiting approval, blocked, expiring permissions, change requests pending,
+expenses awaiting approval, providers to verify/review, incidents to review/correct, privacy requests
+overdue, invoices overdue). **Not yet built:** a separate decision log (§6.10), and a
+destruction/handoff-export lifecycle.
 
 **Summary:** every one of the 15 journey steps is now at least partially operable through the UI, and
 **12 of 15 are fully supported** — a navigator can create an engagement, record the agreement and

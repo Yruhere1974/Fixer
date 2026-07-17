@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Badge } from "@/components/badge";
-import { getExceptions, getIncidentExceptions, getPrivacyExceptions, getProviderExceptions, listClients } from "@/lib/queries";
-import { clientStatusLabel, consentTypeLabel, formatDate, incidentTypeLabel, privacyRequestTypeLabel, serviceCategoryLabel } from "@/lib/labels";
+import { getExceptions, getIncidentExceptions, getInvoiceExceptions, getPrivacyExceptions, getProviderExceptions, listClients } from "@/lib/queries";
+import { clientStatusLabel, consentTypeLabel, formatDate, incidentTypeLabel, money, privacyRequestTypeLabel, serviceCategoryLabel } from "@/lib/labels";
 import type { ClientStatus } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/session";
-import { canCoordinate, canHandleIncidents, canHandlePrivacy, canManageDirectory } from "@/lib/access";
+import { canCoordinate, canHandleIncidents, canHandlePrivacy, canManageBilling, canManageDirectory } from "@/lib/access";
 
 // Reads live data every request; must not be statically prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -21,12 +21,14 @@ export default async function DashboardPage() {
   const manageDirectory = canManageDirectory(user.role);
   const handleIncidents = canHandleIncidents(user.role);
   const handlePrivacy = canHandlePrivacy(user.role);
-  const [clients, exceptions, providerExceptions, incidentExceptions, privacyOverdue] = await Promise.all([
+  const manageBilling = canManageBilling(user.role);
+  const [clients, exceptions, providerExceptions, incidentExceptions, privacyOverdue, invoicesOverdue] = await Promise.all([
     listClients(user),
     getExceptions(user),
     manageDirectory ? getProviderExceptions() : Promise.resolve({ pending: [], due: [] }),
     handleIncidents ? getIncidentExceptions() : Promise.resolve({ reviewDue: [], correctiveOverdue: [] }),
     handlePrivacy ? getPrivacyExceptions() : Promise.resolve([]),
+    manageBilling ? getInvoiceExceptions() : Promise.resolve([]),
   ]);
   const providerAttention = [...providerExceptions.pending, ...providerExceptions.due];
   const incidentAttention = Array.from(
@@ -38,9 +40,11 @@ export default async function DashboardPage() {
     exceptions.awaitingApproval.length +
     exceptions.expiring.length +
     exceptions.pendingChanges.length +
+    exceptions.pendingExpenses.length +
     providerAttention.length +
     incidentAttention.length +
-    privacyOverdue.length;
+    privacyOverdue.length +
+    invoicesOverdue.length;
 
   return (
     <div className="space-y-10">
@@ -114,6 +118,28 @@ export default async function DashboardPage() {
               meta: `${cr.client.displayName} · requested by ${cr.requestedByName}`,
             }))}
           />
+          <ExceptionCard
+            title="Expenses awaiting approval"
+            tone="amber"
+            items={exceptions.pendingExpenses.map((e) => ({
+              id: e.id,
+              href: `/clients/${e.client.id}`,
+              label: `${e.description} · ${money(e.amount)}`,
+              meta: e.client.displayName,
+            }))}
+          />
+          {manageBilling && (
+            <ExceptionCard
+              title="Invoices overdue"
+              tone="red"
+              items={invoicesOverdue.map((inv) => ({
+                id: inv.id,
+                href: `/invoices/${inv.id}`,
+                label: inv.number,
+                meta: `${inv.client.displayName} · due ${formatDate(inv.dueDate)}`,
+              }))}
+            />
+          )}
           {manageDirectory && (
             <ExceptionCard
               title="Providers to verify / review"

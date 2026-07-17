@@ -8,12 +8,14 @@ import { DisclosureForm } from "./disclosure-form";
 import { AddConsentForm } from "./add-consent-form";
 import { AddActionItemForm } from "./add-item-form";
 import { AddChangeForm } from "./add-change-form";
+import { AddExpenseForm } from "./add-expense-form";
 import { approveActionItem, completeActionItem } from "./actions";
 import {
   addApprovedContact,
   closeoutClient,
   createActionPlan,
   decideChangeRequest,
+  decideExpense,
   recordAgreement,
   saveIntake,
   updateClientStatus,
@@ -28,6 +30,7 @@ import {
   approvalStatusLabel,
   changeStatusLabel,
   channelLabel,
+  expenseStatusLabel,
   clientStatusLabel,
   consentStatusLabel,
   consentTypeLabel,
@@ -62,6 +65,8 @@ const changeTone: Record<ChangeStatus, "amber" | "green" | "red"> = {
   APPROVED: "green",
   REJECTED: "red",
 };
+
+const expenseTone = { REQUESTED: "amber", APPROVED: "green", REJECTED: "red" } as const;
 
 const INFO_CATEGORIES: InfoCategory[] = [
   "CONTACT_DETAILS", "SCHEDULING", "PROVIDER_COORDINATION", "GENERAL_WELLBEING",
@@ -396,6 +401,48 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         {mayCoordinate && (
           <Editor label="Log a scope / cost change (step 12)">
             <AddChangeForm clientId={client.id} />
+          </Editor>
+        )}
+      </Section>
+
+      {/* Expenses (§6.11) */}
+      <Section title="Third-party expenses">
+        {client.expenses.length === 0 ? (
+          <p className="text-sm text-on-surface-variant/70">No expenses requested.</p>
+        ) : (
+          <ul className="space-y-2">
+            {client.expenses.map((e) => (
+              <li key={e.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-medium">{e.description}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-on-surface-variant">{money(e.amount)}</span>
+                    <Badge tone={expenseTone[e.status]}>{expenseStatusLabel[e.status]}</Badge>
+                  </span>
+                </div>
+                {e.status !== "REQUESTED" && (
+                  <div className="mt-1 text-xs text-on-surface-variant/80">
+                    {expenseStatusLabel[e.status]} by {e.decidedBy?.name ?? "—"}
+                    {e.decisionNote && ` — ${e.decisionNote}`}
+                    {e.invoiceItem && " · billed"}
+                  </div>
+                )}
+                {e.status === "REQUESTED" && mayCoordinate && (
+                  <form action={decideExpense} className="mt-2 flex flex-wrap items-end gap-2">
+                    {hidden}
+                    <input type="hidden" name="expenseId" value={e.id} />
+                    <input name="decisionNote" className="field w-56 px-2.5 py-1.5 text-xs" placeholder="Decision note (optional)" />
+                    <button name="decision" value="APPROVED" className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-on-primary hover:bg-primary-container">Approve</button>
+                    <button name="decision" value="REJECTED" className="rounded-full border-2 border-error px-3 py-1 text-xs font-semibold text-error hover:bg-error-container/40">Reject</button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {mayCoordinate && (
+          <Editor label="Request a third-party expense (§6.11)">
+            <AddExpenseForm clientId={client.id} />
           </Editor>
         )}
       </Section>

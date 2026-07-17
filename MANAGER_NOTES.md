@@ -21,6 +21,24 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Billing: expenses & invoices (§6.11):** Built the last major §6
+  capability. `Expense` (client-approved third-party costs, kept separate from service
+  fees), `Invoice` (auto number, draft→sent→paid→void lifecycle, issue/due/paid dates),
+  `InvoiceItem` (neutral description, kind = service-fee vs third-party-expense, qty×unit
+  or explicit amount, optional link to a source expense) + enums + migration. On the client
+  page: request a third-party expense (neutral desc) and approve/reject (client approval).
+  New `/invoices` area (list, create, detail) gated to `canManageBilling`
+  (Founder/Lead Navigator/Bookkeeper) — the bookkeeper sees client display names + neutral
+  lines, never health data. Invoice detail: add service lines, pull approved expenses onto
+  the invoice as separate lines, and move sent→paid. Exception view gains "Expenses awaiting
+  approval" and "Invoices overdue". Nav link; seeded a pending + approved expense and an
+  overdue invoice; audit throughout. Updated §17.4.1 (billing now in place; step 10 note).
+  - **Verification:** Playwright (`scripts/billing-e2e.mjs`) — approve a pending expense;
+    create an invoice, add a 2h×$90 service line and the approved $60 expense, send → paid;
+    DB confirms INV-0002 PAID totalling $240 (180 service + 60 expense), with service and
+    third-party lines separated. typecheck + lint + build clean; containers rebuilt.
+  - **Version:** Committed on `develop`. Remaining §6 gaps: a separate decision log (§6.10),
+    and the destruction/handoff-export lifecycle (steps 13–14 partials).
 - **2026-07-16 — Privacy-request register (§6.13):** Built the client-rights subsystem.
   `PrivacyRequest` model (type: access/correction/withdraw-consent/complaint/export;
   requester + identity verification; received + policy `responseDueDate` (default +30d);

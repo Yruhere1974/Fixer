@@ -215,6 +215,45 @@ async function main() {
     },
   });
 
+  // --- Billing (§6.11): a pending + an approved expense, and an overdue sent invoice ---
+  await prisma.invoice.deleteMany({ where: { number: { startsWith: "SEED-" } } });
+  await prisma.expense.create({
+    data: {
+      clientId: client.id,
+      description: "Accessible transportation to first appointment",
+      amount: 60,
+      status: "REQUESTED", // awaiting client approval -> exception
+      createdById: navigator.id,
+    },
+  });
+  const approvedExpense = await prisma.expense.create({
+    data: {
+      clientId: client.id,
+      description: "Courier of intake documents",
+      amount: 24.5,
+      status: "APPROVED",
+      decidedById: navigator.id,
+      decidedAt: new Date(),
+      createdById: navigator.id,
+    },
+  });
+  await prisma.invoice.create({
+    data: {
+      clientId: client.id,
+      number: "SEED-0001",
+      status: "SENT",
+      issueDate: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
+      dueDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // overdue -> exception
+      createdById: navigator.id,
+      items: {
+        create: [
+          { description: "Clarity Session — coordination", kind: "SERVICE_FEE", quantity: 3, unitAmount: 90, amount: 270 },
+          { description: approvedExpense.description, kind: "THIRD_PARTY_EXPENSE", amount: 24.5, sourceExpenseId: approvedExpense.id },
+        ],
+      },
+    },
+  });
+
   // --- Prove the guard both ways (this is the slice-1 verification) ---
   console.log(`\nSeeded fictional client ${client.displayName} (${client.id})\n`);
 

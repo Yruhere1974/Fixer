@@ -43,7 +43,6 @@ await page.click('button:has-text("Save handling")');
 await page.waitForLoadState("networkidle");
 await page.click('button:has-text("Mark completed")');
 await page.waitForLoadState("networkidle");
-const afterComplete = await page.content();
 await page.screenshot({ path: `${OUT}/privacy-detail.png`, fullPage: true });
 
 await page.goto(`${base}/`, { waitUntil: "networkidle" });

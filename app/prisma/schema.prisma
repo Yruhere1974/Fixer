@@ -142,6 +142,26 @@ enum PrivacyRequestStatus {
   ESCALATED
 }
 
+/// Third-party expense approval (plan §6.11) — kept separate from service fees.
+enum ExpenseStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  VOID
+}
+
+/// Invoice line separates service fees from passed-through third-party expenses (§6.11).
+enum InvoiceItemKind {
+  SERVICE_FEE
+  THIRD_PARTY_EXPENSE
+}
+
 enum ConsentMethod {
   WRITTEN_SIGNATURE
   ELECTRONIC_ACCEPTANCE
@@ -241,6 +261,9 @@ model User {
   approvedIncidentClosures IncidentRecord[] @relation("incidentCloser")
   createdPrivacyRequests PrivacyRequest[] @relation("privacyCreator")
   assignedPrivacyRequests PrivacyRequest[] @relation("privacyAssignee")
+  createdExpenses  Expense[]        @relation("expenseCreator")
+  decidedExpenses  Expense[]        @relation("expenseDecider")
+  createdInvoices  Invoice[]        @relation("invoiceCreator")
 
   @@index([role])
 }
@@ -292,6 +315,8 @@ model Client {
   changeRequests   ChangeRequest[]
   incidents        IncidentRecord[]
   privacyRequests  PrivacyRequest[]
+  expenses         Expense[]
+  invoices         Invoice[]
   auditEvents      AuditEvent[]
 
   @@index([status])
@@ -667,4 +692,71 @@ model PrivacyRequest {
 
   @@index([status])
   @@index([responseDueDate])
+}
+
+// ---------------------------------------------------------------------------
+// Billing: expenses & invoices (plan §6.11)
+// ---------------------------------------------------------------------------
+
+/// A third-party expense requiring client approval before it is incurred/billed (§6.11).
+/// Descriptions are neutral — no health or provider detail beyond what billing needs.
+model Expense {
+  id           String        @id @default(cuid())
+  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId     String
+  description  String
+  amount       Decimal       @db.Decimal(10, 2)
+  incurredOn   DateTime?
+  status       ExpenseStatus @default(REQUESTED)
+  decisionNote String?
+  decidedBy    User?         @relation("expenseDecider", fields: [decidedById], references: [id])
+  decidedById  String?
+  decidedAt    DateTime?
+  createdBy    User?         @relation("expenseCreator", fields: [createdById], references: [id])
+  createdById  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  invoiceItem  InvoiceItem?
+
+  @@index([clientId, status])
+}
+
+/// A client invoice. Neutral service descriptions only — detailed health/family/provider
+/// information is never copied here (§6.11).
+model Invoice {
+  id          String        @id @default(cuid())
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId    String
+  number      String        @unique
+  status      InvoiceStatus @default(DRAFT)
+  issueDate   DateTime?
+  dueDate     DateTime?
+  paidAt      DateTime?
+  notes       String?
+  createdBy   User?         @relation("invoiceCreator", fields: [createdById], references: [id])
+  createdById String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  items       InvoiceItem[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model InvoiceItem {
+  id             String          @id @default(cuid())
+  invoice        Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId      String
+  description    String
+  kind           InvoiceItemKind @default(SERVICE_FEE)
+  quantity       Decimal?        @db.Decimal(10, 2)
+  unitAmount     Decimal?        @db.Decimal(10, 2)
+  amount         Decimal         @db.Decimal(10, 2)
+  sourceExpense  Expense?        @relation(fields: [sourceExpenseId], references: [id])
+  sourceExpenseId String?        @unique
+  createdAt      DateTime        @default(now())
+
+  @@index([invoiceId])
 }

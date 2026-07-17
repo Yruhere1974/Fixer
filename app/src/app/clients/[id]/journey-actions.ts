@@ -12,6 +12,7 @@ import type {
   CommunicationChannel,
   ConsentMethod,
   ConsentType,
+  ExpenseStatus,
   InfoCategory,
   Priority,
   RetentionCategory,
@@ -364,6 +365,73 @@ export async function decideChangeRequest(formData: FormData) {
     entityId: changeId,
     clientId,
     summary: `${decision === "APPROVED" ? "Approved" : "Rejected"} change request: ${existing.description}`,
+  });
+  revalidate(clientId);
+}
+
+// --- §6.11: third-party expense requests (client approval) --------------------
+
+export async function requestExpense(
+  clientId: string,
+  _prev: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const auth = await authorize(clientId);
+  if (!auth) return errState("You are not authorized for this action.");
+  const { user } = auth;
+
+  const description = str(formData, "description");
+  const amount = decimal(formData, "amount");
+  if (!description) return errState("Describe the expense (neutral — no health detail).");
+  if (amount == null || amount <= 0) return errState("Enter a valid amount.");
+
+  const expense = await prisma.expense.create({
+    data: {
+      clientId,
+      description,
+      amount,
+      incurredOn: date(formData, "incurredOn"),
+      createdById: user.id,
+    },
+  });
+
+  await recordAudit({
+    actorId: user.id,
+    action: "CREATE",
+    entityType: "Expense",
+    entityId: expense.id,
+    clientId,
+    summary: `Requested third-party expense "${description}" ($${amount}).`,
+  });
+  revalidate(clientId);
+  return { ok: true };
+}
+
+/** Record the client's approval/rejection of a third-party expense (§6.11). */
+export async function decideExpense(formData: FormData) {
+  const auth = await authorize(str(formData, "clientId"));
+  if (!auth) return;
+  const { user, clientId } = auth;
+
+  const expenseId = str(formData, "expenseId");
+  const decision = str(formData, "decision") as ExpenseStatus;
+  if (!["APPROVED", "REJECTED"].includes(decision)) return;
+
+  const existing = await prisma.expense.findFirst({ where: { id: expenseId, clientId } });
+  if (!existing || existing.status !== "REQUESTED") return;
+
+  await prisma.expense.update({
+    where: { id: expenseId },
+    data: { status: decision, decisionNote: str(formData, "decisionNote") || null, decidedById: user.id, decidedAt: new Date() },
+  });
+
+  await recordAudit({
+    actorId: user.id,
+    action: decision === "APPROVED" ? "APPROVE" : "REJECT",
+    entityType: "Expense",
+    entityId: expenseId,
+    clientId,
+    summary: `${decision === "APPROVED" ? "Approved" : "Rejected"} expense "${existing.description}".`,
   });
   revalidate(clientId);
 }

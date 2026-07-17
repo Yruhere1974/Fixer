@@ -31,7 +31,7 @@ export async function getExceptions(user: Pick<User, "id" | "role">, now: Date =
   const clientScope = canViewAllClients(user.role) ? {} : { assignedNavigatorId: user.id };
   const itemScope = { plan: { is: { client: { is: clientScope } } } };
 
-  const [overdue, blocked, awaitingApproval, activeConsents, pendingChanges] = await Promise.all([
+  const [overdue, blocked, awaitingApproval, activeConsents, pendingChanges, pendingExpenses] = await Promise.all([
     prisma.actionItem.findMany({
       where: { dueDate: { lt: now }, status: { not: "DONE" }, ...itemScope },
       include: { plan: { include: { client: { select: { id: true, displayName: true } } } } },
@@ -54,11 +54,16 @@ export async function getExceptions(user: Pick<User, "id" | "role">, now: Date =
       include: { client: { select: { id: true, displayName: true } } },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.expense.findMany({
+      where: { status: "REQUESTED", client: { is: clientScope } },
+      include: { client: { select: { id: true, displayName: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
 
   const expiring = activeConsents.filter((c) => consentStatus(c, now) === "ACTIVE");
 
-  return { overdue, blocked, awaitingApproval, expiring, pendingChanges };
+  return { overdue, blocked, awaitingApproval, expiring, pendingChanges, pendingExpenses };
 }
 
 /**
@@ -96,6 +101,10 @@ export async function getClientDetail(id: string, user: Pick<User, "id" | "role"
         include: { createdBy: { select: { name: true } }, decidedBy: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
       },
+      expenses: {
+        include: { decidedBy: { select: { name: true } }, invoiceItem: { select: { invoiceId: true } } },
+        orderBy: { createdAt: "desc" },
+      },
       auditEvents: {
         include: { actor: { select: { name: true } } },
         orderBy: { createdAt: "desc" },
@@ -129,6 +138,43 @@ export async function getProvider(id: string) {
   return prisma.provider.findUnique({
     where: { id },
     include: { verifiedBy: { select: { name: true } }, createdBy: { select: { name: true } } },
+  });
+}
+
+// --- Billing (§6.11) ---------------------------------------------------------
+
+export async function listInvoices() {
+  return prisma.invoice.findMany({
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    include: { client: { select: { displayName: true } }, items: { select: { amount: true } } },
+  });
+}
+
+export async function getInvoice(id: string) {
+  return prisma.invoice.findUnique({
+    where: { id },
+    include: {
+      client: { select: { id: true, displayName: true } },
+      createdBy: { select: { name: true } },
+      items: { orderBy: { createdAt: "asc" } },
+    },
+  });
+}
+
+/** Approved expenses for a client not yet attached to any invoice — billable. */
+export async function getBillableExpenses(clientId: string) {
+  return prisma.expense.findMany({
+    where: { clientId, status: "APPROVED", invoiceItem: { is: null } },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+/** Overdue invoices: sent, past due date, not paid/void (§6.11). */
+export async function getInvoiceExceptions(now: Date = new Date()) {
+  return prisma.invoice.findMany({
+    where: { status: "SENT", dueDate: { not: null, lte: now } },
+    include: { client: { select: { displayName: true } } },
+    orderBy: { dueDate: "asc" },
   });
 }
 
