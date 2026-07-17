@@ -123,7 +123,7 @@ export default async function HandoffPage({ params }: { params: Promise<{ id: st
         </Block>
 
         <footer className="border-t border-outline-variant/40 pt-4 text-xs text-on-surface-variant">
-          MedFixer Operations — non-clinical coordination. Generated {formatDate(new Date())}.
+          Alongside — non-clinical coordination. Generated {formatDate(new Date())}.
         </footer>
       </article>
     </div>

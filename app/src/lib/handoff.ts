@@ -92,6 +92,6 @@ export function buildHandoffMarkdown(c: HandoffData): string {
 
   lines.push(`## Next steps & maintenance guidance`, c.maintenanceGuidance ?? "_None recorded._", "");
 
-  lines.push("---", `_MedFixer Operations — non-clinical coordination. Generated ${formatDate(new Date())}._`);
+  lines.push("---", `_Alongside — non-clinical coordination. Generated ${formatDate(new Date())}._`);
   return lines.join("\n");
 }

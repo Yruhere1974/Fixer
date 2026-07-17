@@ -9,7 +9,7 @@ import { logout } from "@/app/login/actions";
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
 
 export const metadata: Metadata = {
-  title: "MedFixer Operations",
+  title: "Alongside Operations",
   description: "Controlled client-information workspace for the Kelowna Health & Wellness Navigator.",
 };
 
@@ -42,9 +42,7 @@ export default async function RootLayout({
                     <path d="M12 8v6M9 11h6" />
                   </svg>
                 </span>
-                <span className="text-lg font-semibold tracking-tight text-primary">
-                  Med<span className="text-on-surface">Fixer</span>
-                </span>
+                <span className="text-lg font-semibold tracking-tight text-primary">Alongside</span>
               </Link>
               <nav className="hidden gap-6 text-sm text-on-surface-variant sm:flex">
                 <Link href="/workspace" className="hover:text-primary">Workspace</Link>
@@ -87,7 +85,7 @@ export default async function RootLayout({
         <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">{children}</main>
         <footer className="border-t border-outline-variant/50 bg-surface-lowest">
           <div className="mx-auto max-w-6xl px-6 py-6 text-xs text-on-surface-variant">
-            MedFixer Operations · Care-First coordination · Non-clinical
+            Alongside · Care-First coordination · Non-clinical
           </div>
         </footer>
       </body>

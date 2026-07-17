@@ -13,9 +13,7 @@ export default function LoginPage() {
               <path d="M12 8v6M9 11h6" />
             </svg>
           </span>
-          <span className="text-xl font-semibold tracking-tight text-primary">
-            Med<span className="text-on-surface">Fixer</span>
-          </span>
+          <span className="text-xl font-semibold tracking-tight text-primary">Alongside</span>
         </div>
         <h1 className="text-lg font-semibold tracking-tight">Sign in</h1>
         <p className="mt-1 mb-6 text-sm text-on-surface-variant">
