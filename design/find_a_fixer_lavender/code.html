@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MedFixer | Directory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#48454e",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#eeeef0",
+                    "tertiary-fixed": "#e8e0eb",
+                    "outline-variant": "#c8c5d0",
+                    "primary": "#605b92",
+                    "primary-container": "#7a74ab",
+                    "on-surface-variant": "#47464f",
+                    "on-secondary-fixed": "#1d192b",
+                    "on-surface": "#1c1b1f",
+                    "secondary-fixed-dim": "#ccc2dc",
+                    "background": "#f9f9fb",
+                    "tertiary-fixed-dim": "#ccc2db",
+                    "inverse-primary": "#ccc2f9",
+                    "on-secondary-container": "#4a4458",
+                    "on-background": "#1c1b1f",
+                    "on-primary-fixed": "#1c174b",
+                    "outline": "#787680",
+                    "surface-container-highest": "#e5e2e6",
+                    "secondary-fixed": "#e8def8",
+                    "tertiary": "#7d5260",
+                    "surface-tint": "#605b92",
+                    "on-error-container": "#410002",
+                    "inverse-on-surface": "#f4eff4",
+                    "surface-dim": "#ded8e1",
+                    "surface-container-high": "#e9e7ec",
+                    "primary-fixed": "#e6e1ff",
+                    "on-primary-container": "#f1efff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#e8def8",
+                    "on-primary-fixed-variant": "#484378",
+                    "on-primary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#ccc2f9",
+                    "secondary": "#625b71",
+                    "on-tertiary-fixed": "#31111d",
+                    "surface-bright": "#fef7ff",
+                    "inverse-surface": "#313033",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#4a4458",
+                    "surface-variant": "#e5e2e6",
+                    "tertiary-container": "#ffd8e4",
+                    "on-tertiary-container": "#31111d",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#f3f3f5",
+                    "surface": "#f9f9fb",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "8px",
+                    "lg": "12px",
+                    "xl": "16px",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "64px",
+                    "container-padding-desktop": "48px",
+                    "container-padding-mobile": "20px",
+                    "gutter": "24px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "headline-xl-mobile": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "label-sm": ["Manrope"],
+                    "headline-xl": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "700"}],
+                    "headline-xl-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f9f9fb;
+            font-family: 'Manrope', sans-serif;
+            color: #1c1b1f;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .network-pattern {
+            background-image: radial-gradient(#605b92 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            opacity: 0.04;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(96, 91, 146, 0.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c8c5d0;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="bg-surface/90 backdrop-blur-md sticky top-0 z-50 shadow-sm h-20 flex items-center">
+<nav class="flex justify-between items-center w-full px-container-padding-desktop max-w-7xl mx-auto">
+<div class="flex items-center gap-12">
+<a class="text-headline-md font-headline-md font-bold text-primary" href="#">MedFixer</a>
+<div class="hidden md:flex gap-8">
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-1" href="#">Directory</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">My Health</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Messages</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">How it Works</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden lg:flex items-center gap-2 px-4 py-2 text-on-surface-variant hover:bg-primary/5 rounded-lg transition-all font-label-md text-label-md">
+                    Login
+                </button>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-full font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all shadow-[0_4px_12px_rgba(96,91,146,0.2)]">
+                    Find a Fixer
+                </button>
+</div>
+</nav>
+</header>
+<main class="flex-grow relative">
+<!-- Decorative Background Pattern -->
+<div class="absolute inset-0 network-pattern pointer-events-none"></div>
+<div class="max-w-7xl mx-auto px-container-padding-desktop py-8 flex gap-gutter relative z-10">
+<!-- Sidebar Filters -->
+<aside class="w-72 shrink-0 hidden md:block">
+<div class="sticky top-28 space-y-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary mb-6">Filters</h2>
+</div>
+<!-- Specialty Filter -->
+<div class="space-y-3">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Specialty</label>
+<div class="space-y-2">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary">Medical Logistics</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary">Patient Advocacy</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary">Chronic Care Coordination</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary">Insurance Navigation</span>
+</label>
+</div>
+</div>
+<!-- Location Filter -->
+<div class="space-y-3">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Location</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">location_on</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl py-3 pl-10 pr-4 font-body-md text-body-md focus:ring-2 focus:ring-primary/20" placeholder="City or Zip" type="text"/>
+</div>
+</div>
+<!-- Rating Filter -->
+<div class="space-y-3">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Minimum Rating</label>
+<div class="flex items-center justify-between px-2">
+<span class="text-xs font-label-sm text-outline">1★</span>
+<input class="flex-grow mx-4 accent-primary" max="5" min="1" step="0.5" type="range"/>
+<span class="text-xs font-label-sm text-outline">5★</span>
+</div>
+</div>
+<!-- Availability -->
+<div class="space-y-3">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Availability</label>
+<div class="flex flex-wrap gap-2">
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-label-sm font-label-sm hover:border-primary hover:text-primary transition-colors">Today</button>
+<button class="px-3 py-1.5 rounded-full border border-primary bg-primary-fixed text-primary font-label-sm">This Week</button>
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-label-sm font-label-sm hover:border-primary hover:text-primary transition-colors">Next Week</button>
+</div>
+</div>
+<button class="w-full py-3 text-primary border border-primary rounded-xl font-label-md text-label-md hover:bg-primary/5 transition-all">
+                        Reset Filters
+                    </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<section class="flex-grow">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Available Fixers</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Showing 142 medical coordination experts</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-md text-label-md text-on-surface-variant">Sort by:</span>
+<select class="bg-transparent border-none font-label-md text-label-md text-primary focus:ring-0 cursor-pointer">
+<option>Highest Rated</option>
+<option>Closest Distance</option>
+<option>Next Available</option>
+</select>
+</div>
+</div>
+<!-- Fixer Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Profile Card 1 -->
+<div class="glass-card rounded-3xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group relative overflow-hidden">
+<div class="flex gap-5">
+<div class="relative shrink-0">
+<img class="w-24 h-24 rounded-2xl object-cover shadow-md" data-alt="A friendly, middle-aged female medical professional with a warm smile, wearing a professional navy blue blazer and a soft lavender shirt." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQeMPkof9zrWOBjxdB1WxKGoxLaTS8SQk6uNlG0MrQcYUW5DvuaamtBtI6rZXAIE2qk5pTVqpQ0nk4aK9JEyxYK59z4SEDkTu42SvVzFVADT8ZSL2lTVlY9xZ4eYRhshAxkYXmW2YfL-xzTaJXQzZVxupvSB6ry4OQuhCFhaEglZXvi-rfokKKLYg_qRKhw_kWTA-uXW50zcbE2w31YzdNxttZvcfb6BuJTZvYApwn-T5dLvkHHp8g"/>
+<div class="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-sm">
+<div class="bg-purple-400 w-3 h-3 rounded-full border-2 border-white"></div>
+</div>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Dr. Sarah Jenkins</h3>
+<span class="inline-block px-2.5 py-0.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-label-sm mb-2">Patient Advocate</span>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md">4.9</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mt-2">
+                                    Specializing in navigating complex oncology treatments and clinical trial coordination with 15 years of experience.
+                                </p>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs font-label-sm">Portland, OR</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">payments</span>
+<span class="text-xs font-label-sm">$$$</span>
+</div>
+</div>
+<button class="bg-primary-container text-on-primary-container px-5 py-2 rounded-xl font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2 group/btn">
+                                Connect
+                                <span class="material-symbols-outlined text-sm transition-transform group-hover/btn:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Profile Card 2 -->
+<div class="glass-card rounded-3xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
+<div class="flex gap-5">
+<div class="relative shrink-0">
+<img class="w-24 h-24 rounded-2xl object-cover shadow-md" data-alt="A professional man in his late 30s with a neatly groomed beard and glasses." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxGHXBohQvo0Q0APDcSwIgH38swS8nSjy1Qe4EmJuO9SAQihb7WjiHfObaL75xuZkc-uBcOAHr8ebZXbopUViiV1u3IRv7eS3BRTYRXx4FPYLggZ1_pjDtCpuRHeLKkUxMUN1iCyn1jWRcg93PCpdabE3Ta1r5ZtMz6Yv5G9z7mlpJdylIqSQoMNm7JHKu_aVVuquOtxUfpzLxNAZwA3R5tnay3vz2ZF4Af4BnyIRsG921gkRM4tth"/>
+<div class="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-sm">
+<div class="bg-orange-400 w-3 h-3 rounded-full border-2 border-white"></div>
+</div>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Michael Thorne</h3>
+<span class="inline-block px-2.5 py-0.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-label-sm mb-2">Insurance Liaison</span>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md">4.8</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mt-2">
+                                    Expert at resolving billing disputes and maximizing out-of-network benefits for rare disease treatments.
+                                </p>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs font-label-sm">Remote</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">payments</span>
+<span class="text-xs font-label-sm">$$</span>
+</div>
+</div>
+<button class="bg-primary-container text-on-primary-container px-5 py-2 rounded-xl font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2 group/btn">
+                                Connect
+                                <span class="material-symbols-outlined text-sm transition-transform group-hover/btn:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Profile Card 3 -->
+<div class="glass-card rounded-3xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
+<div class="flex gap-5">
+<div class="relative shrink-0">
+<img class="w-24 h-24 rounded-2xl object-cover shadow-md" data-alt="A young female medical coordinator with a cheerful and empathetic expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtjbhWAY5NRfIBkc27gb3GeOhVWiw43RLpkfB1jzeHqOeTKypNCRUUpETCxixfb-Nhc8_YzGAPdbxzzDjL506kNw9gxXZkIdcMMFuFd8yj24iiP8xhbHR1QKZWmcWxhP3ybtyCrMvhr-0DIfqsbUzaqsc3K6Yh1fSHfgh26_BpoGcS31IM_0bZPyzGnltp525bCd9a1Oid2k1RChYz_RgfZ0Xx-dQ2VKUExASTRRBbkM2owdw30Cr2"/>
+<div class="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-sm">
+<div class="bg-purple-400 w-3 h-3 rounded-full border-2 border-white"></div>
+</div>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Elena Rodriguez</h3>
+<span class="inline-block px-2.5 py-0.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-label-sm mb-2">Logistics Expert</span>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md">5.0</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mt-2">
+                                    Specializing in international medical transport and cross-border surgery logistics for specialized procedures.
+                                </p>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs font-label-sm">Miami, FL</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">payments</span>
+<span class="text-xs font-label-sm">$$$</span>
+</div>
+</div>
+<button class="bg-primary-container text-on-primary-container px-5 py-2 rounded-xl font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2 group/btn">
+                                Connect
+                                <span class="material-symbols-outlined text-sm transition-transform group-hover/btn:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Profile Card 4 -->
+<div class="glass-card rounded-3xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
+<div class="flex gap-5">
+<div class="relative shrink-0">
+<img class="w-24 h-24 rounded-2xl object-cover shadow-md" data-alt="A senior medical consultant with a confident and serene smile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZLB_ul9wlGNZ939tEbVLKv3OiJ_rvrL9dUcljiArxOG7SX0TqmfxUzWuHZBIvOUXmrBTQTg13zcKjw1FQa_4tX9uaPG3Ub8mS2V1uHmjSbbM42uclNNdkXCGcbMUb7h2lm1RYuiHjVoBE2qSiLuALMqXsKB3F9y5LkfaT0w1GK58U__Es9E9lKwVWDGjmm4IY4byKIzqTWk4V8oULCygB5ZExxZFoc0qBF7Kfw4G0ZVcuF3AUJGmE"/>
+<div class="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-sm">
+<div class="bg-purple-400 w-3 h-3 rounded-full border-2 border-white"></div>
+</div>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Dr. James Wilson</h3>
+<span class="inline-block px-2.5 py-0.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-label-sm mb-2">Chronic Care</span>
+</div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md">4.7</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2 mt-2">
+                                    Dedicated to streamlining long-term care plans for elderly patients with multiple chronic conditions.
+                                </p>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs font-label-sm">Austin, TX</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">payments</span>
+<span class="text-xs font-label-sm">$$</span>
+</div>
+</div>
+<button class="bg-primary-container text-on-primary-container px-5 py-2 rounded-xl font-label-md text-label-md hover:bg-primary hover:text-on-primary transition-all flex items-center gap-2 group/btn">
+                                Connect
+                                <span class="material-symbols-outlined text-sm transition-transform group-hover/btn:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Load More / Pagination -->
+<div class="mt-12 flex justify-center">
+<button class="px-8 py-3 border-2 border-primary text-primary font-label-md text-label-md rounded-full hover:bg-primary/5 transition-all active:scale-95">
+                        Load More Fixers
+                    </button>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container mt-section-gap py-16">
+<div class="max-w-7xl mx-auto px-container-padding-desktop grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div>
+<a class="font-headline-md text-headline-md text-primary font-bold block mb-4" href="#">MedFixer</a>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm mb-6">
+                    Professional, empathetic medical coordination that puts your care first. We simplify the complex world of healthcare.
+                </p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">
+                    © 2024 MedFixer. Care-First Medical Coordination.
+                </p>
+</div>
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-4">
+<h4 class="font-label-md text-label-md text-primary font-bold uppercase tracking-wider">Company</h4>
+<nav class="flex flex-col gap-2">
+<a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Help Center</a>
+</nav>
+</div>
+<div class="space-y-4">
+<h4 class="font-label-md text-label-md text-primary font-bold uppercase tracking-wider">Platform</h4>
+<nav class="flex flex-col gap-2">
+<a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Provider Portal</a>
+<a class="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Contact Us</a>
+</nav>
+</div>
+</div>
+</div>
+</footer>
+<!-- Floating Help Button (FAB Contextual) -->
+<button class="fixed bottom-8 right-8 bg-primary text-on-primary w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined">question_answer</span>
+</button>
+<script>
+        // Micro-interaction: Filter toggle simulation
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                // Visual feedback of filter update
+                const mainGrid = document.querySelector('.grid-cols-1');
+                if (mainGrid) {
+                  mainGrid.style.opacity = '0.5';
+                  setTimeout(() => {
+                      mainGrid.style.opacity = '1';
+                  }, 300);
+                }
+            });
+        });
+
+        // Search Input focus effect
+        const locationInput = document.querySelector('input[placeholder="City or Zip"]');
+        if (locationInput) {
+          locationInput.addEventListener('focus', () => {
+              locationInput.parentElement.classList.add('ring-2', 'ring-primary/20');
+          });
+          locationInput.addEventListener('blur', () => {
+              locationInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+          });
+        }
+    </script>
+</body></html>
