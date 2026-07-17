@@ -466,6 +466,72 @@ Every engagement must follow this sequence:
 
 The client remains the decision-maker. Silence is not consent or approval.
 
+### 17.4.1 Platform Coverage of the Controlled Client Journey
+
+> **Status note (implementation, not requirement).** This subsection records how far the
+> Fixer Operations Platform (`app/`) currently supports the §17.4 journey. It does not change
+> any requirement above; the stricter control always applies. Coverage moves toward
+> "supported" as the build progresses. Updated after the journey build (post-`v2026.07.17-mvp`).
+
+**Legend:** ✅ operable through the UI today · 🟡 partially operable / gaps remain · ⛔ not yet built.
+
+```mermaid
+flowchart TD
+    S1[1. Record inquiry<br/>minimal PII]:::ok --> S2[2. Fit call +<br/>documented scope decision]:::ok
+    S2 --> S3{3. Immediate safety<br/>or medical concern?}:::ok
+    S3 -- Yes --> E[Direct to 9-1-1 / 9-8-8 / 8-1-1<br/>record facts, close]:::partial
+    S3 -- No --> S4[4. Explain package, fees,<br/>limits, response times]:::ok
+    S4 --> S5[5. Agreement, privacy notice,<br/>consent + communication permissions]:::ok
+    S5 --> S6[6. Structured intake]:::ok
+    S6 --> S7[7. Research options +<br/>verify credentials]:::notbuilt
+    S7 --> S8[8. Present written<br/>action plan]:::ok
+    S8 --> S9{9. Client approves<br/>plan + costs?}:::ok
+    S9 -- Changes --> S8
+    S9 -- Approved --> S10[10. Track actions, dates,<br/>decisions, unresolved items]:::partial
+    S10 --> S11[11. Send updates to<br/>approved recipients only]:::ok
+    S11 --> S12{12. Material scope<br/>or cost change?}:::notbuilt
+    S12 -- Yes --> S8
+    S12 -- No --> S13[13. Final summary,<br/>provider list, handoff]:::partial
+    S13 --> S14[14. Retention / return /<br/>secure destruction]:::partial
+    S14 --> S15[15. Feedback +<br/>close or renew]:::ok
+
+    classDef ok fill:#d7f5e3,stroke:#2f7d54,color:#0f3d26;
+    classDef partial fill:#fdecc8,stroke:#b5852a,color:#5a3d0a;
+    classDef notbuilt fill:#ffdad6,stroke:#ba1a1a,color:#7a0e0e;
+```
+
+| # | Journey step | Coverage | What exists / what's missing |
+|---|---|---|---|
+| 1 | Record inquiry (minimal PII) | ✅ | "New engagement" form creates the client + inquiry. |
+| 2 | Fit call + documented scope decision | ✅ | Fit decision captured on the new-engagement form. |
+| 3 | Safety/medical screen before sales | ✅ | Scope/safety screen captured up front; non-proceed opens the client as CLOSED. Dedicated emergency workflow still absent. |
+| 4 | Explain package, fees, limits, response times | ✅ | Record-agreement editor (package, version, fees/response-time confirmation). |
+| 5 | Agreement, privacy notice, consent, permissions | ✅ | Add/withdraw consents (scope, channels, recipients, expiry) + add approved contacts, in the UI. |
+| 6 | Structured intake | ✅ | Edit-intake editor (objective, priorities, budget, accessibility, do-not-share). |
+| 7 | Research options + verify credentials | ⛔ | No provider directory / verification model yet (plan §6.6, ops §17.7). **Deferred slice.** |
+| 8 | Present written action plan | ✅ | Create plan + add action items (owner/priority/due/cost/backup/next action). |
+| 9 | Client approval before coordinating/costs | ✅ | Approve action + evidence-gated completion. |
+| 10 | Track actions, dates, decisions, unresolved | 🟡 | Action tracking, audit trail, and daily exception view work; no decision/change log or expenses/invoices. |
+| 11 | Updates to approved recipients only | ✅ | **Consent guard** permits/blocks each disclosure by scope, channel, recipient, expiry, withdrawal — recording both outcomes. |
+| 12 | Approve material scope/cost changes | ⛔ | No change-log workflow (item approval exists, but not scope/cost change control). **Deferred slice.** |
+| 13 | Final summary, provider list, handoff | 🟡 | Closeout captures retention + feedback and closes; no exportable handoff/summary package. |
+| 14 | Retention / return / secure destruction | 🟡 | Retention category + review date set at closeout; legal-hold field; no destruction execution/scheduler. |
+| 15 | Feedback + close or renew | ✅ | Closeout captures feedback and closes; status control reactivates (renew). |
+
+**Cross-cutting controls in place** (support §5, §14, §17.14–17.15): individual accounts +
+role-based access with assignment scoping (auth, ADR 0003); an attributable **audit trail** of every
+mutation and disclosure; the **daily exception view** (overdue, awaiting approval, blocked, expiring
+permissions). **Not yet built:** incident/near-miss log (§17.5), provider directory (§17.7),
+decision/change logs, invoicing, privacy access/correction requests, and a destruction/handoff-export
+lifecycle.
+
+**Summary:** the core journey is now **operable end-to-end through the UI** — a navigator can create
+an engagement, record the agreement and intake, manage consents and approved contacts, author the
+action plan, run consent-gated updates, and close out with retention and feedback — all attributed in
+the audit trail. Remaining gaps: the **provider directory** (step 7) and **change-log** (step 12) are
+deferred slices; tracking (10), handoff export (13), and secure destruction (14) are partial. None of
+this satisfies the §17.8 hard launch gate, which remains open.
+
 ### 17.5 Safety, Safeguarding, and Incident Control
 
 The documented protocol must include:

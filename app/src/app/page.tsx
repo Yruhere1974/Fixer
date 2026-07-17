@@ -4,6 +4,7 @@ import { getExceptions, listClients } from "@/lib/queries";
 import { clientStatusLabel, consentTypeLabel, formatDate } from "@/lib/labels";
 import type { ClientStatus } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/session";
+import { canCoordinate } from "@/lib/access";
 
 // Reads live data every request; must not be statically prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -90,7 +91,17 @@ export default async function DashboardPage() {
       )}
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold tracking-tight">Clients</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold tracking-tight">Clients</h2>
+          {canCoordinate(user.role) && (
+            <Link
+              href="/clients/new"
+              className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-on-primary shadow-[0_4px_12px_rgba(90,86,137,0.3)] hover:bg-primary-container"
+            >
+              + New engagement
+            </Link>
+          )}
+        </div>
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="border-b border-outline-variant/50 bg-surface-low text-left text-xs uppercase tracking-wide text-on-surface-variant">

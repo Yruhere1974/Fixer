@@ -21,6 +21,23 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Controlled client journey operable end-to-end:** Turned the §17.4
+  journey from data-modelled/read-only into a UI a navigator can actually run. Added:
+  a **New engagement** flow (`/clients/new`) creating client + inquiry + scope/safety
+  screen (steps 1–3); record/update **agreement** (4); edit **intake** (6); **consent**
+  create + withdraw and **approved-contact** management (5) — which unlocks the guard
+  for real use; **action-plan** authoring — create plan + add items (8); a **closeout**
+  with retention + feedback and a status control (13–15). All mutations enforce auth,
+  §5 role/access, and write to the audit trail. New shared form primitives
+  (`components/fields.tsx`, `submit-button.tsx`, `lib/forms.ts`). Updated the §17.4.1
+  coverage diagram in `Project_Operating_System.md` (now 9 ✅ / 3 🟡 / 2 ⛔).
+  - **Verification:** Playwright end-to-end (`scripts/journey-e2e.mjs`) creates a full
+    engagement from scratch through the UI — agreement, intake, contact, consent, plan
+    item, and a guard-permitted family update — all asserted present and attributed in
+    the audit trail. Caught + fixed a real bug: multi-select checkboxes submitted "on"
+    instead of the enum value. typecheck + lint + build clean; containers rebuilt.
+  - **Version:** Committed on `develop`. Deferred slices: provider directory + credential
+    verification (step 7 / §17.7) and the decision/change log (step 12).
 - **2026-07-16 — Authentication + §5 role enforcement (ADR 0003):** Replaced the
   placeholder actor with real auth: email + password (scrypt), DB-backed **revocable**
   sessions (httpOnly cookie), a Next 16 `proxy.ts` for optimistic redirects, and a
