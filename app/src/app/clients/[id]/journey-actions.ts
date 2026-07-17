@@ -377,6 +377,44 @@ export async function decideChangeRequest(formData: FormData) {
   revalidate(clientId);
 }
 
+// --- White-glove: client-experience feedback ----------------------------------
+
+export async function recordFeedback(
+  clientId: string,
+  _prev: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const auth = await authorize(clientId);
+  if (!auth) return errState("You are not authorized for this action.");
+  const { user } = auth;
+
+  const effortScore = intVal(formData, "effortScore");
+  const confidenceScore = intVal(formData, "confidenceScore");
+  if (effortScore == null || effortScore < 1 || effortScore > 5) return errState("Choose an effort score (1–5).");
+  if (confidenceScore == null || confidenceScore < 1 || confidenceScore > 5) return errState("Choose a confidence score (1–5).");
+
+  const fb = await prisma.clientFeedback.create({
+    data: {
+      clientId,
+      effortScore,
+      confidenceScore,
+      comment: str(formData, "comment") || null,
+      context: str(formData, "context") || null,
+      recordedById: user.id,
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "CREATE",
+    entityType: "ClientFeedback",
+    entityId: fb.id,
+    clientId,
+    summary: `Recorded client feedback (effort ${effortScore}/5, confidence ${confidenceScore}/5).`,
+  });
+  revalidate(clientId);
+  return { ok: true };
+}
+
 // --- White-glove: relationship, contact cadence, and promises -----------------
 
 /** Set the backup navigator and the next promised client-contact date (white-glove #1, #2). */

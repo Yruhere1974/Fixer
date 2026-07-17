@@ -11,6 +11,7 @@ import { AddChangeForm } from "./add-change-form";
 import { AddDecisionForm } from "./add-decision-form";
 import { AddExpenseForm } from "./add-expense-form";
 import { AddPromiseForm } from "./add-promise-form";
+import { AddFeedbackForm } from "./add-feedback-form";
 import { AddAppointmentForm, AddHandoffForm, AddRecoveryForm } from "./service-forms";
 import { approveActionItem, completeActionItem } from "./actions";
 import {
@@ -672,6 +673,32 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         {mayCoordinate && (
           <Editor label="Open a service-recovery record (§white-glove #6)">
             <AddRecoveryForm clientId={client.id} />
+          </Editor>
+        )}
+      </Section>
+
+      {/* Client experience feedback (white-glove scorecard) */}
+      <Section title="Client feedback">
+        {client.feedback.length === 0 ? (
+          <p className="text-sm text-on-surface-variant/70">No feedback recorded.</p>
+        ) : (
+          <ul className="space-y-2">
+            {client.feedback.map((f) => (
+              <li key={f.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-3 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={f.effortScore >= 4 ? "green" : f.effortScore <= 2 ? "red" : "amber"}>Effort {f.effortScore}/5</Badge>
+                  <Badge tone={f.confidenceScore >= 4 ? "green" : f.confidenceScore <= 2 ? "red" : "amber"}>Confidence {f.confidenceScore}/5</Badge>
+                  {f.context && <span className="text-xs text-on-surface-variant">{f.context}</span>}
+                  <span className="text-xs text-on-surface-variant/60">{formatDate(f.createdAt)}</span>
+                </div>
+                {f.comment && <div className="mt-1 text-on-surface-variant">{f.comment}</div>}
+              </li>
+            ))}
+          </ul>
+        )}
+        {mayCoordinate && (
+          <Editor label="Record client feedback (effort & confidence)">
+            <AddFeedbackForm clientId={client.id} />
           </Editor>
         )}
       </Section>

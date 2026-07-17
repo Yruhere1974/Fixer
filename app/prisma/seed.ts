@@ -290,6 +290,18 @@ async function main() {
     },
   });
 
+  // --- Client feedback (white-glove scorecard) ---
+  await prisma.clientFeedback.create({
+    data: {
+      clientId: client.id,
+      effortScore: 5,
+      confidenceScore: 4,
+      context: "After first appointment",
+      comment: "Everything was arranged for me and I knew exactly what to expect.",
+      recordedById: navigator.id,
+    },
+  });
+
   // --- Decision log (§6.10) ---
   await prisma.decision.create({
     data: {

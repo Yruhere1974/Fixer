@@ -21,6 +21,16 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Client-experience feedback capture (closes the last scorecard gap):**
+  `ClientFeedback` model — effort ("How easy was it to get this handled?") and confidence
+  ("Did you know what would happen next?"), each 1–5, plus context/comment (+migration).
+  `recordFeedback` action; a "Client feedback" section on the client page (record + list
+  with tone-coded score badges). The scorecard gains a **Client experience** group
+  (average effort, average confidence, response count) and the "not yet captured" note is
+  removed. Seed adds a sample response. Verified via Playwright (`scripts/scorecard-e2e.mjs`)
+  — scorecard shows effort 5.0/5, confidence 4.0/5. **Every white-glove measure now has a
+  data source; the white-glove doc is fully implemented with nothing outstanding.**
+  - **Version:** Committed on `develop`. typecheck + lint + build clean; containers rebuilt.
 - **2026-07-16 — White-glove Tier 3: economic guardrails + scorecard (white-glove
   complete):** **Cadence & economics:** `ServiceAgreement` gains contact-cadence days,
   included proactive contacts, response window, included hours, overage rate, authorized

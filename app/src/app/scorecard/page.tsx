@@ -47,18 +47,28 @@ export default async function ScorecardPage() {
         <Tile label="Upcoming appointments (7d)" value={String(s.appointmentsUpcoming)} />
       </Group>
 
+      <Group title="Client experience">
+        <Tile
+          label="Client effort (ease)"
+          value={s.avgEffort != null ? `${s.avgEffort.toFixed(1)}/5` : "—"}
+          sub="“How easy was it to get this handled?”"
+          tone={s.avgEffort != null ? (s.avgEffort >= 4 ? "good" : s.avgEffort <= 2.5 ? "bad" : undefined) : undefined}
+        />
+        <Tile
+          label="Client confidence"
+          value={s.avgConfidence != null ? `${s.avgConfidence.toFixed(1)}/5` : "—"}
+          sub="“Did you know what would happen next?”"
+          tone={s.avgConfidence != null ? (s.avgConfidence >= 4 ? "good" : s.avgConfidence <= 2.5 ? "bad" : undefined) : undefined}
+        />
+        <Tile label="Feedback responses" value={String(s.feedbackCount)} />
+      </Group>
+
       <Group title="Compliance & finance">
         <Tile label="Providers verified (not stale)" value={pct(s.providersPresentable, s.providersTotal)} sub={`${s.providersPresentable}/${s.providersTotal}`} />
         <Tile label="Open incidents" value={String(s.incidentsOpen)} tone={s.incidentsOpen > 0 ? "bad" : "good"} />
         <Tile label="Open privacy requests" value={String(s.privacyOpen)} tone={s.privacyOpen > 0 ? "bad" : "good"} />
         <Tile label="Invoices overdue" value={String(s.invoicesOverdue)} tone={s.invoicesOverdue > 0 ? "bad" : "good"} />
       </Group>
-
-      <p className="text-xs text-on-surface-variant/70">
-        Not yet captured: client-effort (“How easy was it to get this handled?”) and confidence (“Did
-        you know what would happen next?”). Add a closeout/post-interaction feedback capture to populate
-        these white-glove measures.
-      </p>
     </div>
   );
 }

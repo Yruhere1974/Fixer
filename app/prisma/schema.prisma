@@ -277,6 +277,7 @@ model User {
   createdAppointments Appointment[] @relation("apptCreator")
   createdHandoffs Handoff[]        @relation("handoffCreator")
   ownedRecoveries ServiceRecovery[] @relation("recoveryOwner")
+  recordedFeedback ClientFeedback[] @relation("feedbackRecorder")
   handledInquiries Inquiry[]
   screens         ScreeningRecord[]
   recordedConsents ConsentRecord[] @relation("consentRecorder")
@@ -366,6 +367,7 @@ model Client {
   appointments     Appointment[]
   handoffs         Handoff[]
   serviceRecoveries ServiceRecovery[]
+  feedback         ClientFeedback[]
   auditEvents      AuditEvent[]
 
   @@index([status])
@@ -887,6 +889,23 @@ model ServiceRecovery {
   ownerId                     String?
   createdAt                   DateTime          @default(now())
   updatedAt                   DateTime          @updatedAt
+
+  @@index([clientId])
+}
+
+/// Client-experience feedback (white-glove scorecard): effort ("How easy was it to get this
+/// handled?") and confidence ("Did you know what would happen next?"), 1–5. Populates the scorecard.
+model ClientFeedback {
+  id              String   @id @default(cuid())
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId        String
+  effortScore     Int                            // 1 (very hard) – 5 (very easy)
+  confidenceScore Int                            // 1 (no idea) – 5 (fully knew)
+  comment         String?
+  context         String?                        // e.g. "Closeout", "After appointment"
+  recordedBy      User?    @relation("feedbackRecorder", fields: [recordedById], references: [id])
+  recordedById    String?
+  createdAt       DateTime @default(now())
 
   @@index([clientId])
 }

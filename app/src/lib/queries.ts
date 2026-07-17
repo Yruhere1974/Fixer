@@ -104,6 +104,7 @@ export async function getClientDetail(id: string, user: Pick<User, "id" | "role"
       appointments: { orderBy: { scheduledAt: "asc" } },
       handoffs: { include: { createdBy: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
       serviceRecoveries: { include: { owner: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
+      feedback: { include: { recordedBy: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
       inquiry: { include: { handledBy: { select: { name: true } } } },
       screening: { include: { screenedBy: { select: { name: true } } } },
       agreement: true,
@@ -186,6 +187,7 @@ export async function getScorecard(now: Date = new Date()) {
     recoveriesTotal, recoveriesOpen, recoveriesConfirmed,
     providersTotal, providersPresentable,
     incidentsOpen, privacyOpen, invoicesOverdue, appointmentsUpcoming,
+    feedbackAgg,
   ] = await Promise.all([
     prisma.client.count(),
     prisma.client.count({ where: { status: "ACTIVE" } }),
@@ -207,6 +209,7 @@ export async function getScorecard(now: Date = new Date()) {
     prisma.privacyRequest.count({ where: { status: { not: "COMPLETED" } } }),
     prisma.invoice.count({ where: { status: "SENT", dueDate: { not: null, lte: now } } }),
     prisma.appointment.count({ where: { status: { in: ["REQUESTED", "CONFIRMED"] }, scheduledAt: { not: null, gte: now, lte: soon } } }),
+    prisma.clientFeedback.aggregate({ _avg: { effortScore: true, confidenceScore: true }, _count: true }),
   ]);
 
   return {
@@ -216,6 +219,9 @@ export async function getScorecard(now: Date = new Date()) {
     recoveriesTotal, recoveriesOpen, recoveriesConfirmed,
     providersTotal, providersPresentable,
     incidentsOpen, privacyOpen, invoicesOverdue, appointmentsUpcoming,
+    feedbackCount: feedbackAgg._count,
+    avgEffort: feedbackAgg._avg.effortScore,
+    avgConfidence: feedbackAgg._avg.confidenceScore,
   };
 }
 
