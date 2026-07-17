@@ -1,0 +1,2 @@
+# Local secrets — never commit. Holds dev/test credentials and the like.
+/secrets/
