@@ -71,6 +71,31 @@ enum ConsentType {
   MARKETING
 }
 
+/// Provider / community-service categories (plan §6.6, ops §17.7).
+enum ServiceCategory {
+  FAMILY_PHYSICIAN
+  NURSE_PRACTITIONER
+  PHYSIOTHERAPY
+  COUNSELLING
+  NUTRITION
+  FITNESS
+  HOME_SUPPORT
+  TRANSPORTATION
+  MEALS
+  RECREATION
+  SENIORS_SERVICES
+  OTHER
+}
+
+/// Directory listing status. A verified provider whose review date has passed displays as stale.
+enum ProviderStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  STALE
+  RESTRICTED
+  INACTIVE
+}
+
 enum ConsentMethod {
   WRITTEN_SIGNATURE
   ELECTRONIC_ACCEPTANCE
@@ -161,6 +186,8 @@ model User {
   ownedItems      ActionItem[]     @relation("itemOwner")
   reviewedItems   ActionItem[]     @relation("itemReviewer")
   auditEvents     AuditEvent[]
+  createdProviders Provider[]      @relation("providerCreator")
+  verifiedProviders Provider[]     @relation("providerVerifier")
 
   @@index([role])
 }
@@ -429,4 +456,55 @@ model AuditEvent {
   @@index([clientId])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Provider / community-service directory (plan §6.6, ops §17.7)
+// ---------------------------------------------------------------------------
+
+/// A curated, verifiable directory entry. Selection criteria are kept factual; no "best" ranking
+/// and no pay-to-play. Credentials are verified before first referral and reviewed periodically.
+model Provider {
+  id                 String          @id @default(cuid())
+  name               String
+  organization       String?
+  category           ServiceCategory
+  servicesOffered    String                        // exact services + intended client fit
+  clientFit          String?
+
+  contactEmail       String?
+  contactPhone       String?
+  website            String?
+  location           String?
+  serviceArea        String?
+  virtualOptions     Boolean         @default(false)
+  accessibility      String?
+  languages          String?
+  culturalSafety     String?
+
+  pricing            String?
+  cancellationPolicy String?
+  waitTime           String?
+  referralRequired   Boolean         @default(false)
+
+  registration       String?                       // registration / licence details
+  insuranceNote      String?
+  privacyPractices   String?
+  conflictDisclosure String?                        // affiliations, gifts, commissions, conflicts
+
+  status             ProviderStatus  @default(PENDING_VERIFICATION)
+  verifiedAt         DateTime?
+  verificationSource String?                        // e.g. the public register consulted
+  verifiedBy         User?           @relation("providerVerifier", fields: [verifiedById], references: [id])
+  verifiedById       String?
+  lastReviewDate     DateTime?
+  nextReviewDate     DateTime?
+
+  createdBy          User?           @relation("providerCreator", fields: [createdById], references: [id])
+  createdById        String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([category])
+  @@index([status])
 }

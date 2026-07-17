@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Badge } from "@/components/badge";
-import { getExceptions, listClients } from "@/lib/queries";
-import { clientStatusLabel, consentTypeLabel, formatDate } from "@/lib/labels";
+import { getExceptions, getProviderExceptions, listClients } from "@/lib/queries";
+import { clientStatusLabel, consentTypeLabel, formatDate, serviceCategoryLabel } from "@/lib/labels";
 import type { ClientStatus } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/session";
-import { canCoordinate } from "@/lib/access";
+import { canCoordinate, canManageDirectory } from "@/lib/access";
 
 // Reads live data every request; must not be statically prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -18,12 +18,19 @@ const statusTone: Record<ClientStatus, "gray" | "green" | "amber" | "blue"> = {
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [clients, exceptions] = await Promise.all([listClients(user), getExceptions(user)]);
+  const manageDirectory = canManageDirectory(user.role);
+  const [clients, exceptions, providerExceptions] = await Promise.all([
+    listClients(user),
+    getExceptions(user),
+    manageDirectory ? getProviderExceptions() : Promise.resolve({ pending: [], due: [] }),
+  ]);
+  const providerAttention = [...providerExceptions.pending, ...providerExceptions.due];
   const exceptionCount =
     exceptions.overdue.length +
     exceptions.blocked.length +
     exceptions.awaitingApproval.length +
-    exceptions.expiring.length;
+    exceptions.expiring.length +
+    providerAttention.length;
 
   return (
     <div className="space-y-10">
@@ -52,7 +59,7 @@ export default async function DashboardPage() {
             tone="red"
             items={exceptions.overdue.map((i) => ({
               id: i.id,
-              clientId: i.plan.client.id,
+              href: `/clients/${i.plan.client.id}`,
               label: i.title,
               meta: `${i.plan.client.displayName} · due ${formatDate(i.dueDate)}`,
             }))}
@@ -62,7 +69,7 @@ export default async function DashboardPage() {
             tone="amber"
             items={exceptions.awaitingApproval.map((i) => ({
               id: i.id,
-              clientId: i.plan.client.id,
+              href: `/clients/${i.plan.client.id}`,
               label: i.title,
               meta: i.plan.client.displayName,
             }))}
@@ -72,7 +79,7 @@ export default async function DashboardPage() {
             tone="amber"
             items={exceptions.blocked.map((i) => ({
               id: i.id,
-              clientId: i.plan.client.id,
+              href: `/clients/${i.plan.client.id}`,
               label: i.title,
               meta: i.plan.client.displayName,
             }))}
@@ -82,11 +89,26 @@ export default async function DashboardPage() {
             tone="amber"
             items={exceptions.expiring.map((c) => ({
               id: c.id,
-              clientId: c.client.id,
+              href: `/clients/${c.client.id}`,
               label: consentTypeLabel[c.type],
               meta: `${c.client.displayName} · expires ${formatDate(c.expiryDate)}`,
             }))}
           />
+          {manageDirectory && (
+            <ExceptionCard
+              title="Providers to verify / review"
+              tone="amber"
+              items={providerAttention.map((p) => ({
+                id: p.id,
+                href: `/providers/${p.id}`,
+                label: p.name,
+                meta:
+                  p.status === "PENDING_VERIFICATION"
+                    ? `${serviceCategoryLabel[p.category]} · pending verification`
+                    : `${serviceCategoryLabel[p.category]} · review due ${formatDate(p.nextReviewDate)}`,
+              }))}
+            />
+          )}
         </div>
       )}
 
@@ -155,7 +177,7 @@ function ExceptionCard({
 }: {
   title: string;
   tone: "red" | "amber";
-  items: { id: string; clientId: string; label: string; meta: string }[];
+  items: { id: string; href: string; label: string; meta: string }[];
 }) {
   return (
     <div className="card p-5">
@@ -170,7 +192,7 @@ function ExceptionCard({
           {items.map((item) => (
             <li key={item.id} className="text-sm">
               <Link
-                href={`/clients/${item.clientId}`}
+                href={item.href}
                 className="font-medium text-on-surface hover:text-primary hover:underline"
               >
                 {item.label}

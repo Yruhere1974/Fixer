@@ -21,6 +21,23 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Provider directory (§17.7, journey step 7):** Built the curated
+  provider/community-service directory. `Provider` model (identity, category, services/
+  fit, location/accessibility, pricing/wait/referral, registration/insurance, conflict
+  disclosure, verification fields, review dates, status). Pages: `/providers` (search +
+  category filter), `/providers/new`, `/providers/[id]`. Actions: create (enters pending
+  verification), **verify credentials** (records source + date + reviewer, sets Verified,
+  schedules a 90-day review), mark reviewed, set/restrict status — all RBAC-gated
+  (`canManageDirectory`) and audited. Stale logic: a verified entry past its review date
+  displays as **Stale** and is flagged not-presentable (§17.7). Added a "Providers to
+  verify / review" card to the daily exception view and a Providers nav link. Seeded a
+  verified/pending/stale example each. Updated §17.4.1 coverage (step 7 → ✅; only the
+  change-log, step 12, remains ⛔).
+  - **Verification:** Playwright (`scripts/providers-e2e.mjs`) — seeded statuses render
+    correctly (verified/pending/stale), create → pending and verify → active confirmed in
+    the DB, and the dashboard shows the provider-exception card. typecheck + lint + build
+    clean.
+  - **Version:** Committed on `develop`.
 - **2026-07-16 — Controlled client journey operable end-to-end:** Turned the §17.4
   journey from data-modelled/read-only into a UI a navigator can actually run. Added:
   a **New engagement** flow (`/clients/new`) creating client + inquiry + scope/safety

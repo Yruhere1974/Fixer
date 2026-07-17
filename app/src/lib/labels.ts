@@ -8,7 +8,9 @@ import type {
   FitDecision,
   InfoCategory,
   Priority,
+  ProviderStatus,
   ScreenOutcome,
+  ServiceCategory,
 } from "@/generated/prisma/client";
 import type { ConsentStatus } from "@/lib/consent";
 
@@ -91,6 +93,29 @@ export const consentStatusLabel: Record<ConsentStatus, string> = {
   SCHEDULED: "Scheduled",
   EXPIRED: "Expired",
   WITHDRAWN: "Withdrawn",
+};
+
+export const serviceCategoryLabel: Record<ServiceCategory, string> = {
+  FAMILY_PHYSICIAN: "Family physician",
+  NURSE_PRACTITIONER: "Nurse practitioner",
+  PHYSIOTHERAPY: "Physiotherapy",
+  COUNSELLING: "Counselling",
+  NUTRITION: "Nutrition",
+  FITNESS: "Fitness",
+  HOME_SUPPORT: "Home support",
+  TRANSPORTATION: "Transportation",
+  MEALS: "Meals",
+  RECREATION: "Recreation",
+  SENIORS_SERVICES: "Seniors' services",
+  OTHER: "Other",
+};
+
+export const providerStatusLabel: Record<ProviderStatus, string> = {
+  PENDING_VERIFICATION: "Pending verification",
+  ACTIVE: "Verified",
+  STALE: "Stale",
+  RESTRICTED: "Restricted",
+  INACTIVE: "Inactive",
 };
 
 const dateFmt = new Intl.DateTimeFormat("en-CA", {

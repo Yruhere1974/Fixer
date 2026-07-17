@@ -28,3 +28,8 @@ export function assertCanCoordinate(user: Pick<User, "role">): void {
     throw new Error("Your role does not permit this action.");
   }
 }
+
+/** May this role manage the provider directory (create/edit/verify)? Coordinators may. */
+export function canManageDirectory(role: Role): boolean {
+  return COORDINATE.includes(role);
+}

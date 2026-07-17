@@ -45,6 +45,10 @@ export default async function RootLayout({
                   Med<span className="text-on-surface">Fixer</span>
                 </span>
               </Link>
+              <nav className="hidden gap-6 text-sm text-on-surface-variant sm:flex">
+                <Link href="/" className="hover:text-primary">Workspace</Link>
+                <Link href="/providers" className="hover:text-primary">Providers</Link>
+              </nav>
               <div className="flex items-center gap-4">
                 <span className="rounded-full bg-warning-container px-3 py-1 text-xs font-medium text-on-warning-container">
                   Fictional data

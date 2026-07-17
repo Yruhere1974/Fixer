@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { consentStatus } from "@/lib/consent";
 import { canAccessClient, canViewAllClients } from "@/lib/access";
-import type { User } from "@/generated/prisma/client";
+import type { ServiceCategory, User } from "@/generated/prisma/client";
 
 /**
  * Dashboard client list, scoped to what the user may see (§5, ADR 0003). Navigators and
@@ -100,3 +100,40 @@ export async function getClientDetail(id: string, user: Pick<User, "id" | "role"
 }
 
 export type ClientDetail = NonNullable<Awaited<ReturnType<typeof getClientDetail>>>;
+
+// --- Provider directory (§17.7) ----------------------------------------------
+
+export async function listProviders(filter?: { category?: ServiceCategory; q?: string }) {
+  return prisma.provider.findMany({
+    where: {
+      category: filter?.category,
+      ...(filter?.q
+        ? { OR: [{ name: { contains: filter.q, mode: "insensitive" } }, { organization: { contains: filter.q, mode: "insensitive" } }] }
+        : {}),
+    },
+    orderBy: [{ name: "asc" }],
+    include: { verifiedBy: { select: { name: true } } },
+  });
+}
+
+export async function getProvider(id: string) {
+  return prisma.provider.findUnique({
+    where: { id },
+    include: { verifiedBy: { select: { name: true } }, createdBy: { select: { name: true } } },
+  });
+}
+
+/** Providers needing attention: awaiting first verification, or a review that is due. */
+export async function getProviderExceptions(now: Date = new Date()) {
+  const [pending, due] = await Promise.all([
+    prisma.provider.findMany({
+      where: { status: "PENDING_VERIFICATION" },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.provider.findMany({
+      where: { status: "ACTIVE", nextReviewDate: { not: null, lte: now } },
+      orderBy: { nextReviewDate: "asc" },
+    }),
+  ]);
+  return { pending, due };
+}

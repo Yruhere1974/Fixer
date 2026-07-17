@@ -142,6 +142,47 @@ async function main() {
     },
   });
 
+  // --- Provider directory (§17.7): a verified, a pending, and a stale entry ---
+  await prisma.provider.deleteMany({ where: { name: { startsWith: FICTIONAL_MARKER } } });
+  const DAY = 24 * 60 * 60 * 1000;
+  await prisma.provider.create({
+    data: {
+      name: `${FICTIONAL_MARKER} Okanagan Physiotherapy`,
+      category: "PHYSIOTHERAPY",
+      servicesOffered: "Orthopaedic and post-surgical physiotherapy; home visits available.",
+      location: "Kelowna",
+      status: "ACTIVE",
+      verifiedAt: new Date(),
+      verificationSource: "College of Physical Therapists of BC register",
+      verifiedById: navigator.id,
+      lastReviewDate: new Date(),
+      nextReviewDate: new Date(Date.now() + 90 * DAY),
+    },
+  });
+  await prisma.provider.create({
+    data: {
+      name: `${FICTIONAL_MARKER} Lakeview Counselling`,
+      category: "COUNSELLING",
+      servicesOffered: "Individual and family counselling; sliding-scale fees.",
+      location: "Kelowna",
+      status: "PENDING_VERIFICATION",
+    },
+  });
+  await prisma.provider.create({
+    data: {
+      name: `${FICTIONAL_MARKER} Valley HandyDART Rides`,
+      category: "TRANSPORTATION",
+      servicesOffered: "Accessible transportation to appointments.",
+      location: "Central Okanagan",
+      status: "ACTIVE",
+      verifiedAt: new Date(Date.now() - 120 * DAY),
+      verificationSource: "Business licence + insurance certificate",
+      verifiedById: navigator.id,
+      lastReviewDate: new Date(Date.now() - 120 * DAY),
+      nextReviewDate: new Date(Date.now() - 30 * DAY), // review overdue -> displays stale
+    },
+  });
+
   // --- Prove the guard both ways (this is the slice-1 verification) ---
   console.log(`\nSeeded fictional client ${client.displayName} (${client.id})\n`);
 
