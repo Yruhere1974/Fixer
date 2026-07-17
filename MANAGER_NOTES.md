@@ -21,6 +21,16 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Decision log (§6.10):** Added a per-client decision register:
+  `Decision` model (question, options presented, decision, decision-maker, reason,
+  affected tasks, recordedBy) + migration. Client-page "Decisions" section: list + a
+  "Record a decision" editor. `logDecision` action (canCoordinate + audit). Seeded a
+  sample. This closes journey step 10 to ✅ (§17.4.1 now 13/15 fully; the two remaining
+  partials are handoff export (13) and secure destruction (14)).
+  - **Verification:** Playwright (`scripts/decision-e2e.mjs`) — the seeded decision lists,
+    and recording a new decision persists (DB confirms both) and audits. typecheck + lint
+    + build clean; containers rebuilt.
+  - **Version:** Committed on `develop`.
 - **2026-07-16 — Billing: expenses & invoices (§6.11):** Built the last major §6
   capability. `Expense` (client-approved third-party costs, kept separate from service
   fees), `Invoice` (auto number, draft→sent→paid→void lifecycle, issue/due/paid dates),

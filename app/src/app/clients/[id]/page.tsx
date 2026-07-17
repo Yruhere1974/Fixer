@@ -8,6 +8,7 @@ import { DisclosureForm } from "./disclosure-form";
 import { AddConsentForm } from "./add-consent-form";
 import { AddActionItemForm } from "./add-item-form";
 import { AddChangeForm } from "./add-change-form";
+import { AddDecisionForm } from "./add-decision-form";
 import { AddExpenseForm } from "./add-expense-form";
 import { approveActionItem, completeActionItem } from "./actions";
 import {
@@ -401,6 +402,37 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         {mayCoordinate && (
           <Editor label="Log a scope / cost change (step 12)">
             <AddChangeForm clientId={client.id} />
+          </Editor>
+        )}
+      </Section>
+
+      {/* Decisions (§6.10) */}
+      <Section title="Decisions">
+        {client.decisions.length === 0 ? (
+          <p className="text-sm text-on-surface-variant/70">No decisions recorded.</p>
+        ) : (
+          <ul className="space-y-3">
+            {client.decisions.map((d) => (
+              <li key={d.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-4 text-sm">
+                <div className="font-semibold">{d.question}</div>
+                {d.optionsPresented && (
+                  <div className="mt-1 text-xs text-on-surface-variant">Options: {d.optionsPresented}</div>
+                )}
+                <div className="mt-1">
+                  <span className="font-medium text-primary">Decided:</span> {d.decision}
+                </div>
+                {d.reason && <div className="text-on-surface-variant">Reason: {d.reason}</div>}
+                {d.affectedTasks && <div className="text-on-surface-variant">Affected: {d.affectedTasks}</div>}
+                <div className="mt-1 text-xs text-on-surface-variant/70">
+                  By {d.decisionMaker} · {formatDate(d.createdAt)} · recorded by {d.recordedBy?.name ?? "—"}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {mayCoordinate && (
+          <Editor label="Record a decision (§6.10)">
+            <AddDecisionForm clientId={client.id} />
           </Editor>
         )}
       </Section>

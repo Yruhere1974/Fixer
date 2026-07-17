@@ -105,6 +105,10 @@ export async function getClientDetail(id: string, user: Pick<User, "id" | "role"
         include: { decidedBy: { select: { name: true } }, invoiceItem: { select: { invoiceId: true } } },
         orderBy: { createdAt: "desc" },
       },
+      decisions: {
+        include: { recordedBy: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+      },
       auditEvents: {
         include: { actor: { select: { name: true } } },
         orderBy: { createdAt: "desc" },

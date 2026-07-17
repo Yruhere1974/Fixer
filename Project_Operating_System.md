@@ -487,7 +487,7 @@ flowchart TD
     S7 --> S8[8. Present written<br/>action plan]:::ok
     S8 --> S9{9. Client approves<br/>plan + costs?}:::ok
     S9 -- Changes --> S8
-    S9 -- Approved --> S10[10. Track actions, dates,<br/>decisions, unresolved items]:::partial
+    S9 -- Approved --> S10[10. Track actions, dates,<br/>decisions, unresolved items]:::ok
     S10 --> S11[11. Send updates to<br/>approved recipients only]:::ok
     S11 --> S12{12. Material scope<br/>or cost change?}:::ok
     S12 -- Yes --> S8
@@ -511,7 +511,7 @@ flowchart TD
 | 7 | Research options + verify credentials | ✅ | Provider directory with search/filter, credential verification (source + date + reviewer), periodic review + stale marking. Per-client shortlist linking into the plan is a refinement. |
 | 8 | Present written action plan | ✅ | Create plan + add action items (owner/priority/due/cost/backup/next action). |
 | 9 | Client approval before coordinating/costs | ✅ | Approve action + evidence-gated completion. |
-| 10 | Track actions, dates, decisions, unresolved | 🟡 | Action tracking, audit trail, exception view, and billing (expenses + invoices) work; no separate decision log yet. |
+| 10 | Track actions, dates, decisions, unresolved | ✅ | Action tracking, decision log, audit trail, exception view, and billing (expenses + invoices) all in the UI. |
 | 11 | Updates to approved recipients only | ✅ | **Consent guard** permits/blocks each disclosure by scope, channel, recipient, expiry, withdrawal — recording both outcomes. |
 | 12 | Approve material scope/cost changes | ✅ | Change-request log with impact assessment (service/schedule/cost/privacy) and approve/reject decisions; pending requests surface in the exception view. |
 | 13 | Final summary, provider list, handoff | 🟡 | Closeout captures retention + feedback and closes; no exportable handoff/summary package. |
@@ -524,19 +524,20 @@ mutation and disclosure; the **incident / complaint register** (§6.12, §17.5 �
 review clock, corrective-action verification required before closure); the **privacy-request register**
 (§6.13 — access/correction/withdrawal/complaint/export, identity verification required before completion,
 response-due tracking); **billing** (§6.11 — client-approved third-party expenses kept separate from
-service fees, neutral invoices with a draft→sent→paid lifecycle, no health detail); and the **daily
-exception view** (overdue, awaiting approval, blocked, expiring permissions, change requests pending,
-expenses awaiting approval, providers to verify/review, incidents to review/correct, privacy requests
-overdue, invoices overdue). **Not yet built:** a separate decision log (§6.10), and a
-destruction/handoff-export lifecycle.
+service fees, neutral invoices with a draft→sent→paid lifecycle, no health detail); the **decision log**
+(§6.10 — question, options, decision, decision-maker, reason, affected tasks); and the **daily exception
+view** (overdue, awaiting approval, blocked, expiring permissions, change requests pending, expenses
+awaiting approval, providers to verify/review, incidents to review/correct, privacy requests overdue,
+invoices overdue). **Not yet built:** a destruction/handoff-export lifecycle.
 
 **Summary:** every one of the 15 journey steps is now at least partially operable through the UI, and
-**12 of 15 are fully supported** — a navigator can create an engagement, record the agreement and
+**13 of 15 are fully supported** — a navigator can create an engagement, record the agreement and
 intake, manage consents and approved contacts, research and verify providers, author the action plan,
-run consent-gated updates, log and decide scope/cost changes, and close out — all attributed in the
-audit trail. The three partials are tracking (10 — no invoicing/decision log), handoff export (13),
-and secure destruction (14). None of this satisfies the §17.8 hard launch gate, which remains open
-(licensing, insurance, legal/privacy review, the fictional-client tabletop test, etc.).
+run consent-gated updates, log decisions and scope/cost changes, bill expenses and service fees, and
+close out — all attributed in the audit trail. The two remaining partials are the closeout handoff
+export (13) and secure-destruction execution (14). None of this satisfies the §17.8 hard launch gate,
+which remains open (licensing, insurance, legal/privacy review, the fictional-client tabletop test,
+etc.).
 
 ### 17.5 Safety, Safeguarding, and Incident Control
 

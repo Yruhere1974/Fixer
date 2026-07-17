@@ -369,6 +369,49 @@ export async function decideChangeRequest(formData: FormData) {
   revalidate(clientId);
 }
 
+// --- §6.10: decision log ------------------------------------------------------
+
+export async function logDecision(
+  clientId: string,
+  _prev: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const auth = await authorize(clientId);
+  if (!auth) return errState("You are not authorized for this action.");
+  const { user } = auth;
+
+  const question = str(formData, "question");
+  const decision = str(formData, "decision");
+  const decisionMaker = str(formData, "decisionMaker");
+  if (!question) return errState("State the question requiring a decision.");
+  if (!decision) return errState("Record the decision made.");
+  if (!decisionMaker) return errState("Record who made the decision.");
+
+  const record = await prisma.decision.create({
+    data: {
+      clientId,
+      question,
+      decision,
+      decisionMaker,
+      optionsPresented: str(formData, "optionsPresented") || null,
+      reason: str(formData, "reason") || null,
+      affectedTasks: str(formData, "affectedTasks") || null,
+      recordedById: user.id,
+    },
+  });
+
+  await recordAudit({
+    actorId: user.id,
+    action: "CREATE",
+    entityType: "Decision",
+    entityId: record.id,
+    clientId,
+    summary: `Recorded decision: ${question}`,
+  });
+  revalidate(clientId);
+  return { ok: true };
+}
+
 // --- §6.11: third-party expense requests (client approval) --------------------
 
 export async function requestExpense(

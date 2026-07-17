@@ -215,6 +215,20 @@ async function main() {
     },
   });
 
+  // --- Decision log (§6.10) ---
+  await prisma.decision.create({
+    data: {
+      clientId: client.id,
+      question: "Which physiotherapy option should we pursue first?",
+      optionsPresented: "Okanagan Physiotherapy (home visits) vs a clinic-based provider.",
+      decision: "Start with Okanagan Physiotherapy for home visits.",
+      decisionMaker: "Jordan Rivers",
+      reason: "Home visits reduce transportation burden.",
+      affectedTasks: "Shortlist physiotherapists.",
+      recordedById: navigator.id,
+    },
+  });
+
   // --- Billing (§6.11): a pending + an approved expense, and an overdue sent invoice ---
   await prisma.invoice.deleteMany({ where: { number: { startsWith: "SEED-" } } });
   await prisma.expense.create({

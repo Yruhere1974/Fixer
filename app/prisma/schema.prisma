@@ -264,6 +264,7 @@ model User {
   createdExpenses  Expense[]        @relation("expenseCreator")
   decidedExpenses  Expense[]        @relation("expenseDecider")
   createdInvoices  Invoice[]        @relation("invoiceCreator")
+  recordedDecisions Decision[]      @relation("decisionRecorder")
 
   @@index([role])
 }
@@ -317,6 +318,7 @@ model Client {
   privacyRequests  PrivacyRequest[]
   expenses         Expense[]
   invoices         Invoice[]
+  decisions        Decision[]
   auditEvents      AuditEvent[]
 
   @@index([status])
@@ -743,6 +745,26 @@ model Invoice {
 
   @@index([clientId])
   @@index([status])
+}
+
+/// A recorded decision (plan §6.10): the question, options, choice, decision-maker, and reason —
+/// creating a clear chain between what the client approved and what the business did.
+model Decision {
+  id               String   @id @default(cuid())
+  client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId         String
+  question         String
+  optionsPresented String?
+  decision         String
+  decisionMaker    String                     // who made it (client or representative)
+  reason           String?
+  affectedTasks    String?
+  recordedBy       User?    @relation("decisionRecorder", fields: [recordedById], references: [id])
+  recordedById     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([clientId])
 }
 
 model InvoiceItem {
