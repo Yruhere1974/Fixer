@@ -42,6 +42,8 @@ export default async function DashboardPage() {
     exceptions.expiring.length +
     exceptions.pendingChanges.length +
     exceptions.pendingExpenses.length +
+    exceptions.contactDue.length +
+    exceptions.promisesDue.length +
     providerAttention.length +
     incidentAttention.length +
     privacyOverdue.length +
@@ -88,6 +90,26 @@ export default async function DashboardPage() {
               href: `/clients/${i.plan.client.id}`,
               label: i.title,
               meta: i.plan.client.displayName,
+            }))}
+          />
+          <ExceptionCard
+            title="Client contact due"
+            tone="red"
+            items={exceptions.contactDue.map((c) => ({
+              id: c.id,
+              href: `/clients/${c.id}`,
+              label: c.displayName,
+              meta: `next contact due ${formatDate(c.nextContactDueAt)}`,
+            }))}
+          />
+          <ExceptionCard
+            title="Promises due to clients"
+            tone="red"
+            items={exceptions.promisesDue.map((p) => ({
+              id: p.id,
+              href: `/clients/${p.client.id}`,
+              label: p.description,
+              meta: `${p.client.displayName} · by ${formatDate(p.dueAt)}`,
             }))}
           />
           <ExceptionCard

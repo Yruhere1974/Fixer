@@ -28,6 +28,7 @@ async function main() {
     });
   }
   const navigator = await prisma.user.findUniqueOrThrow({ where: { email: "navigator@fixer.local" } });
+  const navigator2 = await prisma.user.findUniqueOrThrow({ where: { email: "navigator2@fixer.local" } });
 
   // --- Reset any prior fictional client so the seed is idempotent ---
   await prisma.client.deleteMany({ where: { displayName: { startsWith: FICTIONAL_MARKER } } });
@@ -40,6 +41,9 @@ async function main() {
       preferredChannel: "SECURE_PORTAL",
       status: "ACTIVE",
       assignedNavigatorId: navigator.id,
+      backupNavigatorId: navigator2.id,
+      lastContactAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+      nextContactDueAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // overdue -> contact-due exception
       retentionCategory: "STANDARD_SERVICE",
       maintenanceGuidance:
         "Attend the booked physiotherapy sessions; call the navigator if transportation falls through. Review supports again in 3 months.",
@@ -213,6 +217,29 @@ async function main() {
       receivedAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
       responseDueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // overdue -> exception
       assignedToId: navigator.id,
+      createdById: navigator.id,
+    },
+  });
+
+  // --- Client promises (white-glove #4) ---
+  await prisma.clientPromise.create({
+    data: {
+      clientId: client.id,
+      description: "Confirm the physio slot and email you by Tuesday 3pm.",
+      madeToName: "Client",
+      dueAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // overdue -> promises-due exception
+      createdById: navigator.id,
+    },
+  });
+  await prisma.clientPromise.create({
+    data: {
+      clientId: client.id,
+      description: "Send the verified provider shortlist.",
+      madeToName: "Client",
+      status: "KEPT",
+      keptAt: new Date(),
+      toldBeforeDeadline: true,
+      clientWaiting: false,
       createdById: navigator.id,
     },
   });

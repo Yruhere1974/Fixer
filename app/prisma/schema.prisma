@@ -103,6 +103,13 @@ enum ChangeStatus {
   REJECTED
 }
 
+/// Client-facing promise outcome (white-glove: promise tracking, not just task tracking).
+enum PromiseStatus {
+  OPEN
+  KEPT
+  MISSED
+}
+
 /// Problem-intake types (plan §6.12, ops §17.5).
 enum IncidentType {
   COMPLAINT
@@ -244,6 +251,8 @@ model User {
   sessions     Session[]
 
   assignedClients Client[]         @relation("assignedNavigator")
+  backupForClients Client[]        @relation("backupNavigator")
+  createdPromises ClientPromise[]  @relation("promiseCreator")
   handledInquiries Inquiry[]
   screens         ScreeningRecord[]
   recordedConsents ConsentRecord[] @relation("consentRecorder")
@@ -297,6 +306,12 @@ model Client {
   assignedNavigator   User?    @relation("assignedNavigator", fields: [assignedNavigatorId], references: [id])
   assignedNavigatorId String?
 
+  // White-glove relationship spine: a named backup, and last/next meaningful client contact.
+  backupNavigator     User?    @relation("backupNavigator", fields: [backupNavigatorId], references: [id])
+  backupNavigatorId   String?
+  lastContactAt       DateTime?
+  nextContactDueAt    DateTime?
+
   // Retention & legal hold (plan §6.14, §8.8).
   retentionCategory  RetentionCategory?
   retentionReviewDate DateTime?
@@ -323,6 +338,7 @@ model Client {
   expenses         Expense[]
   invoices         Invoice[]
   decisions        Decision[]
+  promises         ClientPromise[]
   auditEvents      AuditEvent[]
 
   @@index([status])
@@ -749,6 +765,28 @@ model Invoice {
 
   @@index([clientId])
   @@index([status])
+}
+
+/// A client-facing promise (white-glove #4): tracked distinctly from internal tasks so quality is
+/// measured at what the client was told, not just whether an internal task closed.
+model ClientPromise {
+  id                 String        @id @default(cuid())
+  client             Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId           String
+  description        String                            // what was promised
+  madeToName         String                            // to whom (client or family contact)
+  dueAt              DateTime?                          // promised date / contact time
+  clientWaiting      Boolean       @default(true)
+  status             PromiseStatus @default(OPEN)
+  keptAt             DateTime?
+  toldBeforeDeadline Boolean       @default(false)     // if delayed, was the client told before the deadline
+  recoveryAction     String?                           // recovery when a promise was missed
+  createdBy          User?         @relation("promiseCreator", fields: [createdById], references: [id])
+  createdById        String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([clientId, status])
 }
 
 /// A recorded decision (plan §6.10): the question, options, choice, decision-maker, and reason —

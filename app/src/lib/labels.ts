@@ -16,6 +16,7 @@ import type {
   Priority,
   PrivacyRequestStatus,
   PrivacyRequestType,
+  PromiseStatus,
   ProviderStatus,
   ScreenOutcome,
   ServiceCategory,
@@ -108,6 +109,12 @@ export const changeStatusLabel: Record<ChangeStatus, string> = {
   PENDING: "Pending",
   APPROVED: "Approved",
   REJECTED: "Rejected",
+};
+
+export const promiseStatusLabel: Record<PromiseStatus, string> = {
+  OPEN: "Open",
+  KEPT: "Kept",
+  MISSED: "Missed",
 };
 
 export const incidentTypeLabel: Record<IncidentType, string> = {

@@ -21,6 +21,22 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — White-glove Tier 1: relationship spine + promise register:** First
+  slice of the white-glove service layer (`Documents/white-glove-application-improvements.md`),
+  wrapping the compliance core with a relationship layer. **Relationship & contact:**
+  `Client` gains a **backup navigator**, `lastContactAt`, and `nextContactDueAt`; the client
+  header shows primary + backup + last/next contact (overdue in red); coordinators can set the
+  backup + next-contact date and "Log contact now"; a **Client contact due** exception card
+  surfaces overdue contacts. **Promise register (white-glove #4):** a `ClientPromise` model
+  (what / to whom / by when / kept-or-missed / recovery / told-before-deadline), a
+  "Promises to the client" section to add and resolve promises, and a **Promises due to
+  clients** exception card. Both are assignment-scoped and audited. Migration + seed demo.
+  - **Verification:** Playwright (`scripts/relationship-e2e.mjs`) — dashboard shows the two
+    new exception cards; the client page shows backup navigator + overdue contact + promises;
+    adding a promise, resolving one as kept, and logging a contact all persist and audit.
+    typecheck + lint + build clean; containers rebuilt.
+  - **Version:** Committed on `develop`. Next white-glove tiers: appointments/door-to-door
+    logistics + warm-handoff + service-recovery (Tier 2); cadence/economics + scorecard (Tier 3).
 - **2026-07-16 — Secure destruction execution (§8.8, journey step 14):** Built the last
   software gap. `DestructionRecord` tombstone model (neutral label + opaque former-id ref +
   retention rule + method + who/when — **no content**) + migration. A `/retention` page

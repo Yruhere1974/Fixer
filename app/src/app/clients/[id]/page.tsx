@@ -10,6 +10,7 @@ import { AddActionItemForm } from "./add-item-form";
 import { AddChangeForm } from "./add-change-form";
 import { AddDecisionForm } from "./add-decision-form";
 import { AddExpenseForm } from "./add-expense-form";
+import { AddPromiseForm } from "./add-promise-form";
 import { approveActionItem, completeActionItem } from "./actions";
 import {
   addApprovedContact,
@@ -17,12 +18,16 @@ import {
   createActionPlan,
   decideChangeRequest,
   decideExpense,
+  logClientContact,
   recordAgreement,
+  resolvePromise,
   saveIntake,
   updateClientStatus,
+  updateRelationship,
   withdrawConsent,
 } from "./journey-actions";
 import { getClientDetail } from "@/lib/queries";
+import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { canCoordinate } from "@/lib/access";
 import { consentStatus, type ConsentStatus } from "@/lib/consent";
@@ -32,6 +37,7 @@ import {
   changeStatusLabel,
   channelLabel,
   expenseStatusLabel,
+  promiseStatusLabel,
   clientStatusLabel,
   consentStatusLabel,
   consentTypeLabel,
@@ -68,6 +74,7 @@ const changeTone: Record<ChangeStatus, "amber" | "green" | "red"> = {
 };
 
 const expenseTone = { REQUESTED: "amber", APPROVED: "green", REJECTED: "red" } as const;
+const promiseTone = { OPEN: "amber", KEPT: "green", MISSED: "red" } as const;
 
 const INFO_CATEGORIES: InfoCategory[] = [
   "CONTACT_DETAILS", "SCHEDULING", "PROVIDER_COORDINATION", "GENERAL_WELLBEING",
@@ -82,6 +89,15 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   if (!client) notFound();
   const mayCoordinate = canCoordinate(user.role);
   const hidden = <input type="hidden" name="clientId" value={client.id} />;
+  const now = new Date();
+  const contactOverdue = client.nextContactDueAt != null && client.nextContactDueAt <= now && client.status !== "CLOSED";
+  const navigators = mayCoordinate
+    ? await prisma.user.findMany({
+        where: { active: true, role: { in: ["FOUNDER", "LEAD_NAVIGATOR", "NAVIGATOR", "ASSISTANT"] } },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      })
+    : [];
 
   return (
     <div className="space-y-8">
@@ -93,9 +109,16 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
           <Badge tone={client.status === "ACTIVE" ? "green" : "gray"}>{clientStatusLabel[client.status]}</Badge>
         </div>
         <p className="mt-2 text-on-surface-variant">
-          Navigator <span className="text-on-surface">{client.assignedNavigator?.name ?? "—"}</span>{" "}
-          · Retention {client.retentionCategory ?? "—"}
+          Navigator <span className="text-on-surface">{client.assignedNavigator?.name ?? "—"}</span>
+          {" · "}Backup <span className="text-on-surface">{client.backupNavigator?.name ?? "—"}</span>
+          {" · "}Retention {client.retentionCategory ?? "—"}
           {client.legalHold && " · Legal hold"}
+        </p>
+        <p className="mt-1 text-sm text-on-surface-variant">
+          Last contact {formatDate(client.lastContactAt)} ·{" "}
+          <span className={contactOverdue ? "font-medium text-error" : ""}>
+            next contact due {formatDate(client.nextContactDueAt)}{contactOverdue && " — overdue"}
+          </span>
         </p>
 
         {mayCoordinate && (
@@ -111,6 +134,23 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                 </Select>
               </Labeled>
               <SubmitButton variant="outline">Update</SubmitButton>
+            </form>
+            <form action={updateRelationship} className="flex flex-wrap items-end gap-2">
+              {hidden}
+              <Labeled label="Backup navigator">
+                <Select name="backupNavigatorId" defaultValue={client.backupNavigatorId ?? ""} className="w-44">
+                  <option value="">—</option>
+                  {navigators.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+                </Select>
+              </Labeled>
+              <Labeled label="Next contact due">
+                <TextInput name="nextContactDueAt" type="date" defaultValue={client.nextContactDueAt ? client.nextContactDueAt.toISOString().slice(0, 10) : ""} />
+              </Labeled>
+              <SubmitButton variant="outline">Save</SubmitButton>
+            </form>
+            <form action={logClientContact} className="flex items-end">
+              {hidden}
+              <SubmitButton variant="outline">Log contact now</SubmitButton>
             </form>
           </div>
         )}
@@ -402,6 +442,53 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
         {mayCoordinate && (
           <Editor label="Log a scope / cost change (step 12)">
             <AddChangeForm clientId={client.id} />
+          </Editor>
+        )}
+      </Section>
+
+      {/* Promises to the client (white-glove #4) */}
+      <Section title="Promises to the client">
+        {client.promises.length === 0 ? (
+          <p className="text-sm text-on-surface-variant/70">No promises recorded.</p>
+        ) : (
+          <ul className="space-y-3">
+            {client.promises.map((p) => {
+              const overdue = p.status === "OPEN" && p.dueAt != null && p.dueAt <= now;
+              return (
+                <li key={p.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-4 text-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-medium">{p.description}</span>
+                    <Badge tone={overdue ? "red" : promiseTone[p.status]}>
+                      {overdue ? "Overdue" : promiseStatusLabel[p.status]}
+                    </Badge>
+                  </div>
+                  <div className="mt-1 text-xs text-on-surface-variant">
+                    To {p.madeToName}
+                    {p.dueAt && ` · by ${formatDate(p.dueAt)}`} · recorded by {p.createdBy?.name ?? "—"}
+                    {p.status === "MISSED" && p.recoveryAction && ` · recovery: ${p.recoveryAction}`}
+                    {p.status !== "OPEN" && ` · ${p.toldBeforeDeadline ? "client told before deadline" : "client not told before deadline"}`}
+                  </div>
+                  {p.status === "OPEN" && mayCoordinate && (
+                    <form action={resolvePromise} className="mt-3 flex flex-wrap items-end gap-2 border-t border-outline-variant/40 pt-3">
+                      {hidden}
+                      <input type="hidden" name="promiseId" value={p.id} />
+                      <input name="recoveryAction" className="field w-56 px-2.5 py-1.5 text-xs" placeholder="Recovery action (if missed)" />
+                      <label className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                        <input type="checkbox" name="toldBeforeDeadline" className="h-4 w-4 rounded border-outline-variant" />
+                        Told before deadline
+                      </label>
+                      <button name="outcome" value="KEPT" className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-on-primary hover:bg-primary-container">Kept</button>
+                      <button name="outcome" value="MISSED" className="rounded-full border-2 border-error px-3 py-1 text-xs font-semibold text-error hover:bg-error-container/40">Missed</button>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {mayCoordinate && (
+          <Editor label="Record a promise to the client">
+            <AddPromiseForm clientId={client.id} />
           </Editor>
         )}
       </Section>

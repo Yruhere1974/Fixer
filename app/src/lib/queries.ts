@@ -31,7 +31,7 @@ export async function getExceptions(user: Pick<User, "id" | "role">, now: Date =
   const clientScope = canViewAllClients(user.role) ? {} : { assignedNavigatorId: user.id };
   const itemScope = { plan: { is: { client: { is: clientScope } } } };
 
-  const [overdue, blocked, awaitingApproval, activeConsents, pendingChanges, pendingExpenses] = await Promise.all([
+  const [overdue, blocked, awaitingApproval, activeConsents, pendingChanges, pendingExpenses, contactDue, promisesDue] = await Promise.all([
     prisma.actionItem.findMany({
       where: { dueDate: { lt: now }, status: { not: "DONE" }, ...itemScope },
       include: { plan: { include: { client: { select: { id: true, displayName: true } } } } },
@@ -59,11 +59,21 @@ export async function getExceptions(user: Pick<User, "id" | "role">, now: Date =
       include: { client: { select: { id: true, displayName: true } } },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.client.findMany({
+      where: { status: { not: "CLOSED" }, nextContactDueAt: { not: null, lte: now }, ...clientScope },
+      select: { id: true, displayName: true, nextContactDueAt: true },
+      orderBy: { nextContactDueAt: "asc" },
+    }),
+    prisma.clientPromise.findMany({
+      where: { status: "OPEN", dueAt: { not: null, lte: now }, client: { is: clientScope } },
+      include: { client: { select: { id: true, displayName: true } } },
+      orderBy: { dueAt: "asc" },
+    }),
   ]);
 
   const expiring = activeConsents.filter((c) => consentStatus(c, now) === "ACTIVE");
 
-  return { overdue, blocked, awaitingApproval, expiring, pendingChanges, pendingExpenses };
+  return { overdue, blocked, awaitingApproval, expiring, pendingChanges, pendingExpenses, contactDue, promisesDue };
 }
 
 /**
@@ -75,6 +85,8 @@ export async function getClientDetail(id: string, user: Pick<User, "id" | "role"
     where: { id },
     include: {
       assignedNavigator: true,
+      backupNavigator: { select: { name: true } },
+      promises: { include: { createdBy: { select: { name: true } } }, orderBy: { createdAt: "desc" } },
       inquiry: { include: { handledBy: { select: { name: true } } } },
       screening: { include: { screenedBy: { select: { name: true } } } },
       agreement: true,

@@ -15,6 +15,7 @@ import type {
   ExpenseStatus,
   InfoCategory,
   Priority,
+  PromiseStatus,
   RetentionCategory,
   User,
 } from "@/generated/prisma/client";
@@ -365,6 +366,121 @@ export async function decideChangeRequest(formData: FormData) {
     entityId: changeId,
     clientId,
     summary: `${decision === "APPROVED" ? "Approved" : "Rejected"} change request: ${existing.description}`,
+  });
+  revalidate(clientId);
+}
+
+// --- White-glove: relationship, contact cadence, and promises -----------------
+
+/** Set the backup navigator and the next promised client-contact date (white-glove #1, #2). */
+export async function updateRelationship(formData: FormData) {
+  const auth = await authorize(str(formData, "clientId"));
+  if (!auth) return;
+  const { user, clientId } = auth;
+
+  await prisma.client.update({
+    where: { id: clientId },
+    data: {
+      backupNavigatorId: str(formData, "backupNavigatorId") || null,
+      nextContactDueAt: date(formData, "nextContactDueAt"),
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "UPDATE",
+    entityType: "Client",
+    entityId: clientId,
+    clientId,
+    summary: "Updated relationship / contact plan.",
+  });
+  revalidate(clientId);
+}
+
+/** Record that a meaningful client contact just happened (white-glove: no unexplained silence). */
+export async function logClientContact(formData: FormData) {
+  const auth = await authorize(str(formData, "clientId"));
+  if (!auth) return;
+  const { user, clientId } = auth;
+
+  const nextDue = date(formData, "nextContactDueAt");
+  await prisma.client.update({
+    where: { id: clientId },
+    data: { lastContactAt: new Date(), ...(nextDue ? { nextContactDueAt: nextDue } : {}) },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "UPDATE",
+    entityType: "Client",
+    entityId: clientId,
+    clientId,
+    summary: "Logged a meaningful client contact.",
+  });
+  revalidate(clientId);
+}
+
+export async function addPromise(
+  clientId: string,
+  _prev: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const auth = await authorize(clientId);
+  if (!auth) return errState("You are not authorized for this action.");
+  const { user } = auth;
+
+  const description = str(formData, "description");
+  const madeToName = str(formData, "madeToName") || "Client";
+  if (!description) return errState("Describe what was promised.");
+
+  const promise = await prisma.clientPromise.create({
+    data: {
+      clientId,
+      description,
+      madeToName,
+      dueAt: date(formData, "dueAt"),
+      createdById: user.id,
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: "CREATE",
+    entityType: "ClientPromise",
+    entityId: promise.id,
+    clientId,
+    summary: `Promised ${madeToName}: ${description}`,
+  });
+  revalidate(clientId);
+  return { ok: true };
+}
+
+/** Resolve a promise as kept or missed (missed captures recovery + whether told before deadline). */
+export async function resolvePromise(formData: FormData) {
+  const auth = await authorize(str(formData, "clientId"));
+  if (!auth) return;
+  const { user, clientId } = auth;
+
+  const promiseId = str(formData, "promiseId");
+  const outcome = str(formData, "outcome") as PromiseStatus;
+  if (!["KEPT", "MISSED"].includes(outcome)) return;
+  const existing = await prisma.clientPromise.findFirst({ where: { id: promiseId, clientId } });
+  if (!existing || existing.status !== "OPEN") return;
+
+  await prisma.clientPromise.update({
+    where: { id: promiseId },
+    data: {
+      status: outcome,
+      clientWaiting: false,
+      keptAt: outcome === "KEPT" ? new Date() : null,
+      toldBeforeDeadline: str(formData, "toldBeforeDeadline") === "on",
+      recoveryAction: outcome === "MISSED" ? str(formData, "recoveryAction") || null : null,
+    },
+  });
+  await recordAudit({
+    actorId: user.id,
+    action: outcome === "KEPT" ? "APPROVE" : "UPDATE",
+    entityType: "ClientPromise",
+    entityId: promiseId,
+    clientId,
+    summary: `Promise ${outcome === "KEPT" ? "kept" : "missed"}: ${existing.description}`,
   });
   revalidate(clientId);
 }
