@@ -519,6 +519,7 @@ export async function closeoutClient(formData: FormData) {
       closedAt: new Date(),
       retentionCategory,
       retentionReviewDate: date(formData, "retentionReviewDate"),
+      maintenanceGuidance: str(formData, "maintenanceGuidance") || null,
     },
   });
 

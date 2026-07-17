@@ -41,6 +41,8 @@ async function main() {
       status: "ACTIVE",
       assignedNavigatorId: navigator.id,
       retentionCategory: "STANDARD_SERVICE",
+      maintenanceGuidance:
+        "Attend the booked physiotherapy sessions; call the navigator if transportation falls through. Review supports again in 3 months.",
       inquiry: {
         create: {
           source: "Website enquiry",

@@ -64,3 +64,19 @@ body {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
 }
+
+/* Print: hide chrome so the handoff package prints as a clean document. */
+@media print {
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  body {
+    background: #fff;
+  }
+}

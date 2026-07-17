@@ -21,6 +21,20 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Handoff / closeout export (§6.14, journey step 13):** Built the client
+  handoff package. `Client.maintenanceGuidance` field (+migration), captured on the closeout
+  form. A print-ready `/clients/[id]/handoff` page assembles the package (outcome, completed
+  + outstanding items, decisions, scope/cost changes, costs from invoices + approved expenses,
+  retention, and maintenance guidance) with a Print/Save-as-PDF button and print CSS that hides
+  the app chrome. A `/handoff/export` route handler streams the same content as a downloadable
+  **Markdown file** (access-checked + audited as DOWNLOAD). Shared builder in `lib/handoff.ts`.
+  Link from the closeout section. Closes journey step 13 → ✅ (§17.4.1 now 14/15 fully; only
+  secure-destruction execution, step 14, remains partial).
+  - **Verification:** Playwright (`scripts/handoff-e2e.mjs`) — the handoff page renders all
+    sections incl. maintenance guidance, and the export route returns HTTP 200,
+    `text/markdown`, an `attachment; filename=…​.md`, starting with `# Handoff summary`.
+    typecheck + lint + build clean; containers rebuilt.
+  - **Version:** Committed on `develop`.
 - **2026-07-16 — Decision log (§6.10):** Added a per-client decision register:
   `Decision` model (question, options presented, decision, decision-maker, reason,
   affected tasks, recordedBy) + migration. Client-page "Decisions" section: list + a

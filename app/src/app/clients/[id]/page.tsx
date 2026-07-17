@@ -531,11 +531,22 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
                 <TextInput name="retentionReviewDate" type="date" />
               </Labeled>
             </div>
+            <Labeled label="Maintenance / next-steps guidance for the client">
+              <TextArea name="maintenanceGuidance" rows={2} defaultValue={client.maintenanceGuidance ?? ""} placeholder="What the client should do next; how to maintain progress." />
+            </Labeled>
             <Labeled label="Closeout feedback (optional)">
               <TextArea name="feedback" rows={2} placeholder="Client feedback / closeout notes." />
             </Labeled>
             <SubmitButton variant="danger" pendingLabel="Closing…">Close engagement</SubmitButton>
           </form>
+          <div className="mt-4 border-t border-outline-variant/40 pt-4">
+            <Link href={`/clients/${client.id}/handoff`} className="text-sm font-medium text-primary hover:underline">
+              Generate handoff package →
+            </Link>
+            <p className="mt-1 text-xs text-on-surface-variant/70">
+              A print-ready summary of outcomes, decisions, costs, and next steps for the client (§6.14).
+            </p>
+          </div>
         </Section>
       )}
 

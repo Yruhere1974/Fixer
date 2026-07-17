@@ -491,7 +491,7 @@ flowchart TD
     S10 --> S11[11. Send updates to<br/>approved recipients only]:::ok
     S11 --> S12{12. Material scope<br/>or cost change?}:::ok
     S12 -- Yes --> S8
-    S12 -- No --> S13[13. Final summary,<br/>provider list, handoff]:::partial
+    S12 -- No --> S13[13. Final summary,<br/>provider list, handoff]:::ok
     S13 --> S14[14. Retention / return /<br/>secure destruction]:::partial
     S14 --> S15[15. Feedback +<br/>close or renew]:::ok
 
@@ -514,7 +514,7 @@ flowchart TD
 | 10 | Track actions, dates, decisions, unresolved | ✅ | Action tracking, decision log, audit trail, exception view, and billing (expenses + invoices) all in the UI. |
 | 11 | Updates to approved recipients only | ✅ | **Consent guard** permits/blocks each disclosure by scope, channel, recipient, expiry, withdrawal — recording both outcomes. |
 | 12 | Approve material scope/cost changes | ✅ | Change-request log with impact assessment (service/schedule/cost/privacy) and approve/reject decisions; pending requests surface in the exception view. |
-| 13 | Final summary, provider list, handoff | 🟡 | Closeout captures retention + feedback and closes; no exportable handoff/summary package. |
+| 13 | Final summary, provider list, handoff | ✅ | Print-ready handoff package (outcome, completed + outstanding items, decisions, costs, retention, maintenance guidance) with a downloadable Markdown export (audited). |
 | 14 | Retention / return / secure destruction | 🟡 | Retention category + review date set at closeout; legal-hold field; no destruction execution/scheduler. |
 | 15 | Feedback + close or renew | ✅ | Closeout captures feedback and closes; status control reactivates (renew). |
 
@@ -528,16 +528,17 @@ service fees, neutral invoices with a draft→sent→paid lifecycle, no health d
 (§6.10 — question, options, decision, decision-maker, reason, affected tasks); and the **daily exception
 view** (overdue, awaiting approval, blocked, expiring permissions, change requests pending, expenses
 awaiting approval, providers to verify/review, incidents to review/correct, privacy requests overdue,
-invoices overdue). **Not yet built:** a destruction/handoff-export lifecycle.
+invoices overdue); and the **closeout handoff package** (§6.14 — a print-ready summary with a
+downloadable, audited Markdown export). **Not yet built:** secure-destruction execution (§8.8).
 
 **Summary:** every one of the 15 journey steps is now at least partially operable through the UI, and
-**13 of 15 are fully supported** — a navigator can create an engagement, record the agreement and
+**14 of 15 are fully supported** — a navigator can create an engagement, record the agreement and
 intake, manage consents and approved contacts, research and verify providers, author the action plan,
-run consent-gated updates, log decisions and scope/cost changes, bill expenses and service fees, and
-close out — all attributed in the audit trail. The two remaining partials are the closeout handoff
-export (13) and secure-destruction execution (14). None of this satisfies the §17.8 hard launch gate,
-which remains open (licensing, insurance, legal/privacy review, the fictional-client tabletop test,
-etc.).
+run consent-gated updates, log decisions and scope/cost changes, bill expenses and service fees, close
+out, and hand the client a summary package — all attributed in the audit trail. The one remaining
+partial is secure-destruction execution (14 — retention rules are set but the destruction schedule is
+not yet run). None of this satisfies the §17.8 hard launch gate, which remains open (licensing,
+insurance, legal/privacy review, the fictional-client tabletop test, etc.).
 
 ### 17.5 Safety, Safeguarding, and Incident Control
 
