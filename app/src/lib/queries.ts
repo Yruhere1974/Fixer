@@ -132,6 +132,42 @@ export async function getProvider(id: string) {
   });
 }
 
+// --- Incident log (§6.12, §17.5) ---------------------------------------------
+
+export async function listIncidents() {
+  return prisma.incidentRecord.findMany({
+    orderBy: [{ status: "asc" }, { discoveredAt: "desc" }],
+    include: { client: { select: { displayName: true } }, escalationOwner: { select: { name: true } } },
+  });
+}
+
+export async function getIncident(id: string) {
+  return prisma.incidentRecord.findUnique({
+    where: { id },
+    include: {
+      client: { select: { id: true, displayName: true } },
+      escalationOwner: { select: { name: true } },
+      closureApprovedBy: { select: { name: true } },
+      createdBy: { select: { name: true } },
+    },
+  });
+}
+
+/** Open incidents whose 48-hour review is due, plus overdue corrective actions (§17.5). */
+export async function getIncidentExceptions(now: Date = new Date()) {
+  const [reviewDue, correctiveOverdue] = await Promise.all([
+    prisma.incidentRecord.findMany({
+      where: { status: { not: "CLOSED" }, reviewDueAt: { lte: now } },
+      orderBy: { reviewDueAt: "asc" },
+    }),
+    prisma.incidentRecord.findMany({
+      where: { status: { not: "CLOSED" }, correctiveVerified: false, correctiveDeadline: { not: null, lte: now } },
+      orderBy: { correctiveDeadline: "asc" },
+    }),
+  ]);
+  return { reviewDue, correctiveOverdue };
+}
+
 /** Providers needing attention: awaiting first verification, or a review that is due. */
 export async function getProviderExceptions(now: Date = new Date()) {
   const [pending, due] = await Promise.all([

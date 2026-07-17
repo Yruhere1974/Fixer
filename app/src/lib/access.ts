@@ -33,3 +33,16 @@ export function assertCanCoordinate(user: Pick<User, "role">): void {
 export function canManageDirectory(role: Role): boolean {
   return COORDINATE.includes(role);
 }
+
+// Incident/complaint records are the most sensitive class (§7.1) — restricted access (§6.12).
+const HANDLE_INCIDENTS: Role[] = ["FOUNDER", "LEAD_NAVIGATOR", "PRIVACY_LEAD"];
+
+/** May this role view and investigate incidents? Restricted to founder, lead navigator, privacy lead. */
+export function canHandleIncidents(role: Role): boolean {
+  return HANDLE_INCIDENTS.includes(role);
+}
+
+/** May this role report (raise) an incident? Any coordinator may — reporting must be easy (§8.9). */
+export function canReportIncident(role: Role): boolean {
+  return COORDINATE.includes(role) || HANDLE_INCIDENTS.includes(role);
+}

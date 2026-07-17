@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Badge } from "@/components/badge";
-import { getExceptions, getProviderExceptions, listClients } from "@/lib/queries";
-import { clientStatusLabel, consentTypeLabel, formatDate, serviceCategoryLabel } from "@/lib/labels";
+import { getExceptions, getIncidentExceptions, getProviderExceptions, listClients } from "@/lib/queries";
+import { clientStatusLabel, consentTypeLabel, formatDate, incidentTypeLabel, serviceCategoryLabel } from "@/lib/labels";
 import type { ClientStatus } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/session";
-import { canCoordinate, canManageDirectory } from "@/lib/access";
+import { canCoordinate, canHandleIncidents, canManageDirectory } from "@/lib/access";
 
 // Reads live data every request; must not be statically prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -19,19 +19,25 @@ const statusTone: Record<ClientStatus, "gray" | "green" | "amber" | "blue"> = {
 export default async function DashboardPage() {
   const user = await requireUser();
   const manageDirectory = canManageDirectory(user.role);
-  const [clients, exceptions, providerExceptions] = await Promise.all([
+  const handleIncidents = canHandleIncidents(user.role);
+  const [clients, exceptions, providerExceptions, incidentExceptions] = await Promise.all([
     listClients(user),
     getExceptions(user),
     manageDirectory ? getProviderExceptions() : Promise.resolve({ pending: [], due: [] }),
+    handleIncidents ? getIncidentExceptions() : Promise.resolve({ reviewDue: [], correctiveOverdue: [] }),
   ]);
   const providerAttention = [...providerExceptions.pending, ...providerExceptions.due];
+  const incidentAttention = Array.from(
+    new Map([...incidentExceptions.reviewDue, ...incidentExceptions.correctiveOverdue].map((i) => [i.id, i])).values(),
+  );
   const exceptionCount =
     exceptions.overdue.length +
     exceptions.blocked.length +
     exceptions.awaitingApproval.length +
     exceptions.expiring.length +
     exceptions.pendingChanges.length +
-    providerAttention.length;
+    providerAttention.length +
+    incidentAttention.length;
 
   return (
     <div className="space-y-10">
@@ -117,6 +123,18 @@ export default async function DashboardPage() {
                   p.status === "PENDING_VERIFICATION"
                     ? `${serviceCategoryLabel[p.category]} · pending verification`
                     : `${serviceCategoryLabel[p.category]} · review due ${formatDate(p.nextReviewDate)}`,
+              }))}
+            />
+          )}
+          {handleIncidents && (
+            <ExceptionCard
+              title="Incidents to review / correct"
+              tone="red"
+              items={incidentAttention.map((i) => ({
+                id: i.id,
+                href: `/incidents/${i.id}`,
+                label: incidentTypeLabel[i.type],
+                meta: `48h review due ${formatDate(i.reviewDueAt)}`,
               }))}
             />
           )}

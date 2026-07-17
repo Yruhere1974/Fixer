@@ -21,6 +21,25 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Incident / complaint register (§6.12, §17.5):** Built the restricted
+  problem-intake subsystem. `IncidentRecord` model (type, severity, status, discovered/
+  occurred, reportedBy, people/info affected, description, immediate action, notifications,
+  48h `reviewDueAt`, escalation owner, findings, corrective actions/owner/deadline/verified,
+  related change, closure approver) + enums (IncidentType/Severity/IncidentStatus) +
+  migration. Pages: `/incidents` (list, restricted), `/incidents/new` (report — broad
+  access, with the 9-1-1/9-8-8/8-1-1 emergency reminder), `/incidents/[id]` (investigate/
+  corrective/close, restricted). Access split: `canReportIncident` (any coordinator) vs
+  `canHandleIncidents` (Founder/Lead Navigator/Privacy Lead). Controls enforced: **closure
+  blocked until corrective action is verified** (§6.12); 48-hour review clock surfaces in
+  the exception view ("Incidents to review/correct"). Nav link (Incidents for handlers,
+  Report incident for others). Seeded an overdue privacy near-miss. Audit on every action.
+  Updated §17.4.1 cross-cutting controls (incident register now in place).
+  - **Verification:** Playwright (`scripts/incident-e2e.mjs`) — report → investigate →
+    (close disabled) → verify corrective → close; DB confirms CLOSED with approval, and the
+    close button was correctly disabled before verification. Also fixed the test to target
+    `textarea[name="description"]` (the layout's `<meta name="description">` was matching).
+    typecheck + lint + build clean; containers rebuilt.
+  - **Version:** Committed on `develop`.
 - **2026-07-16 — Change log (§6.10, journey step 12):** Built scope/cost change
   control — the last unbuilt journey step. `ChangeRequest` model (requestedBy,
   description, reason, service/schedule/cost/privacy impact, status, decision + note,

@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { currentUser } from "@/lib/session";
+import { canHandleIncidents, canReportIncident } from "@/lib/access";
 import { logout } from "@/app/login/actions";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
@@ -48,6 +49,11 @@ export default async function RootLayout({
               <nav className="hidden gap-6 text-sm text-on-surface-variant sm:flex">
                 <Link href="/" className="hover:text-primary">Workspace</Link>
                 <Link href="/providers" className="hover:text-primary">Providers</Link>
+                {canHandleIncidents(user.role) ? (
+                  <Link href="/incidents" className="hover:text-primary">Incidents</Link>
+                ) : canReportIncident(user.role) ? (
+                  <Link href="/incidents/new" className="hover:text-primary">Report incident</Link>
+                ) : null}
               </nav>
               <div className="flex items-center gap-4">
                 <span className="rounded-full bg-warning-container px-3 py-1 text-xs font-medium text-on-warning-container">

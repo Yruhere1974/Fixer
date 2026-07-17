@@ -183,6 +183,22 @@ async function main() {
     },
   });
 
+  // --- Incident log (§6.12, §17.5): one open privacy near-miss, review overdue ---
+  await prisma.incidentRecord.deleteMany({ where: { reportedByName: { startsWith: FICTIONAL_MARKER } } });
+  await prisma.incidentRecord.create({
+    data: {
+      type: "PRIVACY_EVENT",
+      severity: "MEDIUM",
+      status: "OPEN",
+      clientId: client.id,
+      reportedByName: `${FICTIONAL_MARKER} Navigator (fictional)`,
+      description: "An appointment reminder email was nearly sent to the wrong recipient; caught before sending.",
+      immediateAction: "Cancelled the draft; re-checked the recipient list.",
+      reviewDueAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // review overdue -> exception
+      createdById: navigator.id,
+    },
+  });
+
   // --- Prove the guard both ways (this is the slice-1 verification) ---
   console.log(`\nSeeded fictional client ${client.displayName} (${client.id})\n`);
 

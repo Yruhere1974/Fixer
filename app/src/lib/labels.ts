@@ -7,11 +7,14 @@ import type {
   CommunicationChannel,
   ConsentType,
   FitDecision,
+  IncidentStatus,
+  IncidentType,
   InfoCategory,
   Priority,
   ProviderStatus,
   ScreenOutcome,
   ServiceCategory,
+  Severity,
 } from "@/generated/prisma/client";
 import type { ConsentStatus } from "@/lib/consent";
 
@@ -100,6 +103,28 @@ export const changeStatusLabel: Record<ChangeStatus, string> = {
   PENDING: "Pending",
   APPROVED: "Approved",
   REJECTED: "Rejected",
+};
+
+export const incidentTypeLabel: Record<IncidentType, string> = {
+  COMPLAINT: "Complaint",
+  INCIDENT: "Incident",
+  NEAR_MISS: "Near miss",
+  PRIVACY_EVENT: "Privacy event",
+  SAFEGUARDING: "Safeguarding",
+};
+
+export const severityLabel: Record<Severity, string> = {
+  LOW: "Low",
+  MEDIUM: "Medium",
+  HIGH: "High",
+  CRITICAL: "Critical",
+};
+
+export const incidentStatusLabel: Record<IncidentStatus, string> = {
+  OPEN: "Open",
+  UNDER_REVIEW: "Under review",
+  CORRECTIVE_ACTION: "Corrective action",
+  CLOSED: "Closed",
 };
 
 export const serviceCategoryLabel: Record<ServiceCategory, string> = {

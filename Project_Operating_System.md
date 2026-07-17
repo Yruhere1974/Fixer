@@ -520,10 +520,11 @@ flowchart TD
 
 **Cross-cutting controls in place** (support §5, §14, §17.14–17.15): individual accounts +
 role-based access with assignment scoping (auth, ADR 0003); an attributable **audit trail** of every
-mutation and disclosure; the **daily exception view** (overdue, awaiting approval, blocked, expiring
-permissions, **change requests pending**, **providers to verify/review**). **Not yet built:**
-incident/near-miss log (§17.5), invoicing, privacy access/correction requests, and a
-destruction/handoff-export lifecycle.
+mutation and disclosure; the **incident / complaint register** (§6.12, §17.5 — restricted access, 48-hour
+review clock, corrective-action verification required before closure); and the **daily exception view**
+(overdue, awaiting approval, blocked, expiring permissions, change requests pending, providers to
+verify/review, **incidents to review/correct**). **Not yet built:** invoicing, privacy
+access/correction requests, and a destruction/handoff-export lifecycle.
 
 **Summary:** every one of the 15 journey steps is now at least partially operable through the UI, and
 **12 of 15 are fully supported** — a navigator can create an engagement, record the agreement and
