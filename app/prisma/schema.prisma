@@ -96,6 +96,13 @@ enum ProviderStatus {
   INACTIVE
 }
 
+/// Scope/cost change-request decision (plan §6.10, journey step 12).
+enum ChangeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum ConsentMethod {
   WRITTEN_SIGNATURE
   ELECTRONIC_ACCEPTANCE
@@ -188,6 +195,8 @@ model User {
   auditEvents     AuditEvent[]
   createdProviders Provider[]      @relation("providerCreator")
   verifiedProviders Provider[]     @relation("providerVerifier")
+  createdChanges  ChangeRequest[]  @relation("changeCreator")
+  decidedChanges  ChangeRequest[]  @relation("changeDecider")
 
   @@index([role])
 }
@@ -236,6 +245,7 @@ model Client {
   consents         ConsentRecord[]
   approvedContacts ApprovedContact[]
   disclosures      Disclosure[]
+  changeRequests   ChangeRequest[]
   auditEvents      AuditEvent[]
 
   @@index([status])
@@ -507,4 +517,31 @@ model Provider {
 
   @@index([category])
   @@index([status])
+}
+
+/// Scope/cost change control (plan §6.10, journey step 12). Material changes require an explicit,
+/// impact-assessed decision before work proceeds — new requests are never quietly absorbed.
+model ChangeRequest {
+  id             String       @id @default(cuid())
+  client         Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId       String
+  requestedByName String                       // who requested the change (client or navigator)
+  description    String                         // the requested change
+  reason         String?
+  serviceImpact  String?
+  scheduleImpact String?
+  costImpact     String?
+  privacyImpact  String?
+  status         ChangeStatus @default(PENDING)
+  tasksUpdated   String?                        // what changed as a result, once decided
+  decisionNote   String?
+  decidedBy      User?        @relation("changeDecider", fields: [decidedById], references: [id])
+  decidedById    String?
+  decidedAt      DateTime?
+  createdBy      User?        @relation("changeCreator", fields: [createdById], references: [id])
+  createdById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([clientId, status])
 }

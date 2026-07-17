@@ -7,11 +7,13 @@ import { SubmitButton } from "@/components/submit-button";
 import { DisclosureForm } from "./disclosure-form";
 import { AddConsentForm } from "./add-consent-form";
 import { AddActionItemForm } from "./add-item-form";
+import { AddChangeForm } from "./add-change-form";
 import { approveActionItem, completeActionItem } from "./actions";
 import {
   addApprovedContact,
   closeoutClient,
   createActionPlan,
+  decideChangeRequest,
   recordAgreement,
   saveIntake,
   updateClientStatus,
@@ -24,6 +26,7 @@ import { consentStatus, type ConsentStatus } from "@/lib/consent";
 import {
   actionStatusLabel,
   approvalStatusLabel,
+  changeStatusLabel,
   channelLabel,
   clientStatusLabel,
   consentStatusLabel,
@@ -35,7 +38,7 @@ import {
   priorityLabel,
   screenOutcomeLabel,
 } from "@/lib/labels";
-import type { ActionStatus, CommunicationChannel, InfoCategory } from "@/generated/prisma/client";
+import type { ActionStatus, ChangeStatus, CommunicationChannel, InfoCategory } from "@/generated/prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +55,12 @@ const actionTone: Record<ActionStatus, "gray" | "blue" | "amber" | "green"> = {
   BLOCKED: "amber",
   AWAITING_APPROVAL: "amber",
   DONE: "green",
+};
+
+const changeTone: Record<ChangeStatus, "amber" | "green" | "red"> = {
+  PENDING: "amber",
+  APPROVED: "green",
+  REJECTED: "red",
 };
 
 const INFO_CATEGORIES: InfoCategory[] = [
@@ -327,6 +336,67 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
               </Editor>
             )}
           </>
+        )}
+      </Section>
+
+      {/* Scope & cost changes (step 12) */}
+      <Section title="Scope & cost changes">
+        {client.changeRequests.length === 0 ? (
+          <p className="text-sm text-on-surface-variant/70">No change requests logged.</p>
+        ) : (
+          <ul className="space-y-3">
+            {client.changeRequests.map((cr) => (
+              <li key={cr.id} className="rounded-xl border border-outline-variant/50 bg-surface-low p-4 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-semibold">{cr.description}</span>
+                  <Badge tone={changeTone[cr.status]}>{changeStatusLabel[cr.status]}</Badge>
+                </div>
+                <div className="mt-1 text-xs text-on-surface-variant">
+                  Requested by {cr.requestedByName}
+                  {cr.reason && ` · ${cr.reason}`} · logged {formatDate(cr.createdAt)}
+                </div>
+                {[cr.serviceImpact, cr.scheduleImpact, cr.costImpact, cr.privacyImpact].some(Boolean) && (
+                  <div className="mt-2 grid gap-1 text-xs text-on-surface-variant sm:grid-cols-2">
+                    {cr.serviceImpact && <div>Service: {cr.serviceImpact}</div>}
+                    {cr.scheduleImpact && <div>Schedule: {cr.scheduleImpact}</div>}
+                    {cr.costImpact && <div>Cost: {cr.costImpact}</div>}
+                    {cr.privacyImpact && <div>Privacy: {cr.privacyImpact}</div>}
+                  </div>
+                )}
+                {cr.status !== "PENDING" && (
+                  <div className="mt-2 text-xs text-on-surface-variant/80">
+                    {changeStatusLabel[cr.status]} by {cr.decidedBy?.name ?? "—"} on {formatDate(cr.decidedAt)}
+                    {cr.decisionNote && ` — ${cr.decisionNote}`}
+                    {cr.tasksUpdated && ` · Updated: ${cr.tasksUpdated}`}
+                  </div>
+                )}
+
+                {cr.status === "PENDING" && mayCoordinate && (
+                  <form action={decideChangeRequest} className="mt-3 flex flex-wrap items-end gap-2 border-t border-outline-variant/40 pt-3">
+                    {hidden}
+                    <input type="hidden" name="changeId" value={cr.id} />
+                    <label className="text-xs">
+                      <span className="mb-1 block font-medium text-on-surface-variant">Decision note / tasks updated</span>
+                      <input name="decisionNote" className="field w-72 px-2.5 py-1.5" placeholder="Reason and what changed" />
+                    </label>
+                    <input type="hidden" name="tasksUpdated" value="" />
+                    <button name="decision" value="APPROVED" className="rounded-full bg-primary px-3.5 py-1.5 text-xs font-semibold text-on-primary shadow-[0_4px_12px_rgba(90,86,137,0.3)] hover:bg-primary-container">
+                      Approve
+                    </button>
+                    <button name="decision" value="REJECTED" className="rounded-full border-2 border-error px-3.5 py-1.5 text-xs font-semibold text-error hover:bg-error-container/40">
+                      Reject
+                    </button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {mayCoordinate && (
+          <Editor label="Log a scope / cost change (step 12)">
+            <AddChangeForm clientId={client.id} />
+          </Editor>
         )}
       </Section>
 

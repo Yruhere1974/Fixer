@@ -489,7 +489,7 @@ flowchart TD
     S9 -- Changes --> S8
     S9 -- Approved --> S10[10. Track actions, dates,<br/>decisions, unresolved items]:::partial
     S10 --> S11[11. Send updates to<br/>approved recipients only]:::ok
-    S11 --> S12{12. Material scope<br/>or cost change?}:::notbuilt
+    S11 --> S12{12. Material scope<br/>or cost change?}:::ok
     S12 -- Yes --> S8
     S12 -- No --> S13[13. Final summary,<br/>provider list, handoff]:::partial
     S13 --> S14[14. Retention / return /<br/>secure destruction]:::partial
@@ -513,7 +513,7 @@ flowchart TD
 | 9 | Client approval before coordinating/costs | ✅ | Approve action + evidence-gated completion. |
 | 10 | Track actions, dates, decisions, unresolved | 🟡 | Action tracking, audit trail, and daily exception view work; no decision/change log or expenses/invoices. |
 | 11 | Updates to approved recipients only | ✅ | **Consent guard** permits/blocks each disclosure by scope, channel, recipient, expiry, withdrawal — recording both outcomes. |
-| 12 | Approve material scope/cost changes | ⛔ | No change-log workflow (item approval exists, but not scope/cost change control). **Deferred slice.** |
+| 12 | Approve material scope/cost changes | ✅ | Change-request log with impact assessment (service/schedule/cost/privacy) and approve/reject decisions; pending requests surface in the exception view. |
 | 13 | Final summary, provider list, handoff | 🟡 | Closeout captures retention + feedback and closes; no exportable handoff/summary package. |
 | 14 | Retention / return / secure destruction | 🟡 | Retention category + review date set at closeout; legal-hold field; no destruction execution/scheduler. |
 | 15 | Feedback + close or renew | ✅ | Closeout captures feedback and closes; status control reactivates (renew). |
@@ -521,16 +521,17 @@ flowchart TD
 **Cross-cutting controls in place** (support §5, §14, §17.14–17.15): individual accounts +
 role-based access with assignment scoping (auth, ADR 0003); an attributable **audit trail** of every
 mutation and disclosure; the **daily exception view** (overdue, awaiting approval, blocked, expiring
-permissions, **providers to verify/review**). **Not yet built:** incident/near-miss log (§17.5),
-decision/change logs, invoicing, privacy access/correction requests, and a destruction/handoff-export
-lifecycle.
+permissions, **change requests pending**, **providers to verify/review**). **Not yet built:**
+incident/near-miss log (§17.5), invoicing, privacy access/correction requests, and a
+destruction/handoff-export lifecycle.
 
-**Summary:** the core journey plus the **provider directory** are now **operable end-to-end through
-the UI** — a navigator can create an engagement, record the agreement and intake, manage consents and
-approved contacts, research and verify providers, author the action plan, run consent-gated updates,
-and close out with retention and feedback — all attributed in the audit trail. Remaining: the
-**change-log** (step 12) is the last unbuilt step; tracking (10), handoff export (13), and secure
-destruction (14) are partial. None of this satisfies the §17.8 hard launch gate, which remains open.
+**Summary:** every one of the 15 journey steps is now at least partially operable through the UI, and
+**12 of 15 are fully supported** — a navigator can create an engagement, record the agreement and
+intake, manage consents and approved contacts, research and verify providers, author the action plan,
+run consent-gated updates, log and decide scope/cost changes, and close out — all attributed in the
+audit trail. The three partials are tracking (10 — no invoicing/decision log), handoff export (13),
+and secure destruction (14). None of this satisfies the §17.8 hard launch gate, which remains open
+(licensing, insurance, legal/privacy review, the fictional-client tabletop test, etc.).
 
 ### 17.5 Safety, Safeguarding, and Incident Control
 

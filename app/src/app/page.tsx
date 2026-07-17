@@ -30,6 +30,7 @@ export default async function DashboardPage() {
     exceptions.blocked.length +
     exceptions.awaitingApproval.length +
     exceptions.expiring.length +
+    exceptions.pendingChanges.length +
     providerAttention.length;
 
   return (
@@ -92,6 +93,16 @@ export default async function DashboardPage() {
               href: `/clients/${c.client.id}`,
               label: consentTypeLabel[c.type],
               meta: `${c.client.displayName} · expires ${formatDate(c.expiryDate)}`,
+            }))}
+          />
+          <ExceptionCard
+            title="Change requests pending"
+            tone="amber"
+            items={exceptions.pendingChanges.map((cr) => ({
+              id: cr.id,
+              href: `/clients/${cr.client.id}`,
+              label: cr.description,
+              meta: `${cr.client.displayName} · requested by ${cr.requestedByName}`,
             }))}
           />
           {manageDirectory && (

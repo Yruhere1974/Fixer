@@ -31,7 +31,7 @@ export async function getExceptions(user: Pick<User, "id" | "role">, now: Date =
   const clientScope = canViewAllClients(user.role) ? {} : { assignedNavigatorId: user.id };
   const itemScope = { plan: { is: { client: { is: clientScope } } } };
 
-  const [overdue, blocked, awaitingApproval, activeConsents] = await Promise.all([
+  const [overdue, blocked, awaitingApproval, activeConsents, pendingChanges] = await Promise.all([
     prisma.actionItem.findMany({
       where: { dueDate: { lt: now }, status: { not: "DONE" }, ...itemScope },
       include: { plan: { include: { client: { select: { id: true, displayName: true } } } } },
@@ -49,11 +49,16 @@ export async function getExceptions(user: Pick<User, "id" | "role">, now: Date =
       where: { withdrawnAt: null, expiryDate: { not: null, lte: soon }, client: { is: clientScope } },
       include: { client: { select: { id: true, displayName: true } } },
     }),
+    prisma.changeRequest.findMany({
+      where: { status: "PENDING", client: { is: clientScope } },
+      include: { client: { select: { id: true, displayName: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
 
   const expiring = activeConsents.filter((c) => consentStatus(c, now) === "ACTIVE");
 
-  return { overdue, blocked, awaitingApproval, expiring };
+  return { overdue, blocked, awaitingApproval, expiring, pendingChanges };
 }
 
 /**
@@ -86,6 +91,10 @@ export async function getClientDetail(id: string, user: Pick<User, "id" | "role"
         include: { sender: { select: { name: true } } },
         orderBy: { disclosedAt: "desc" },
         take: 10,
+      },
+      changeRequests: {
+        include: { createdBy: { select: { name: true } }, decidedBy: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
       },
       auditEvents: {
         include: { actor: { select: { name: true } } },

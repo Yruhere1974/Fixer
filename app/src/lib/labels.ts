@@ -2,6 +2,7 @@
 import type {
   ActionStatus,
   ApprovalStatus,
+  ChangeStatus,
   ClientStatus,
   CommunicationChannel,
   ConsentType,
@@ -93,6 +94,12 @@ export const consentStatusLabel: Record<ConsentStatus, string> = {
   SCHEDULED: "Scheduled",
   EXPIRED: "Expired",
   WITHDRAWN: "Withdrawn",
+};
+
+export const changeStatusLabel: Record<ChangeStatus, string> = {
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
 };
 
 export const serviceCategoryLabel: Record<ServiceCategory, string> = {

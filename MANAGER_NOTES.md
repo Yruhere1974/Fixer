@@ -21,6 +21,21 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Change log (§6.10, journey step 12):** Built scope/cost change
+  control — the last unbuilt journey step. `ChangeRequest` model (requestedBy,
+  description, reason, service/schedule/cost/privacy impact, status, decision + note,
+  tasksUpdated) + `ChangeStatus` enum + migration. Client page gains a "Scope & cost
+  changes" section: log a request (impact fields), and approve/reject with a decision
+  note. Pending requests surface in the daily exception view ("Change requests pending").
+  RBAC (`canCoordinate` + client access) + audit on every action. Updated §17.4.1
+  coverage: step 12 → ✅. **Every journey step is now at least partial; 12 of 15 fully
+  operable; 0 ⛔ remaining.**
+  - **Verification:** Playwright (`scripts/change-e2e.mjs`) — create a change request
+    (pending) then approve it with a note; DB confirms create → pending → approved with
+    decision recorded, and the audit trail logs both. typecheck + lint + build clean;
+    containers rebuilt.
+  - **Version:** Committed on `develop`. Remaining partials: tracking/invoicing (10),
+    handoff export (13), secure destruction (14); plus §17.5 incident log and §17.8 gate.
 - **2026-07-16 — Provider directory (§17.7, journey step 7):** Built the curated
   provider/community-service directory. `Provider` model (identity, category, services/
   fit, location/accessibility, pricing/wait/referral, registration/insurance, conflict

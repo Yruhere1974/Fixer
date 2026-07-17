@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/session";
 import { canAccessClient, canCoordinate } from "@/lib/access";
 import { date, decimal, errState, str, strList, type FormState } from "@/lib/forms";
 import type {
+  ChangeStatus,
   ClientStatus,
   CommunicationChannel,
   ConsentMethod,
@@ -288,6 +289,83 @@ export async function addActionItem(
   });
   revalidate(clientId);
   return { ok: true };
+}
+
+// --- Step 12: scope/cost change control --------------------------------------
+
+export async function createChangeRequest(
+  clientId: string,
+  _prev: FormState | null,
+  formData: FormData,
+): Promise<FormState> {
+  const auth = await authorize(clientId);
+  if (!auth) return errState("You are not authorized for this action.");
+  const { user } = auth;
+
+  const description = str(formData, "description");
+  const requestedByName = str(formData, "requestedByName");
+  if (!description) return errState("Describe the requested change.");
+  if (!requestedByName) return errState("Record who requested the change.");
+
+  const change = await prisma.changeRequest.create({
+    data: {
+      clientId,
+      requestedByName,
+      description,
+      reason: str(formData, "reason") || null,
+      serviceImpact: str(formData, "serviceImpact") || null,
+      scheduleImpact: str(formData, "scheduleImpact") || null,
+      costImpact: str(formData, "costImpact") || null,
+      privacyImpact: str(formData, "privacyImpact") || null,
+      createdById: user.id,
+    },
+  });
+
+  await recordAudit({
+    actorId: user.id,
+    action: "CREATE",
+    entityType: "ChangeRequest",
+    entityId: change.id,
+    clientId,
+    summary: `Logged scope/cost change request: ${description}`,
+  });
+  revalidate(clientId);
+  return { ok: true };
+}
+
+/** Approve or reject a change request (journey step 12: approval before work proceeds). */
+export async function decideChangeRequest(formData: FormData) {
+  const auth = await authorize(str(formData, "clientId"));
+  if (!auth) return;
+  const { user, clientId } = auth;
+
+  const changeId = str(formData, "changeId");
+  const decision = str(formData, "decision") as ChangeStatus;
+  if (!["APPROVED", "REJECTED"].includes(decision)) return;
+
+  const existing = await prisma.changeRequest.findFirst({ where: { id: changeId, clientId } });
+  if (!existing || existing.status !== "PENDING") return;
+
+  await prisma.changeRequest.update({
+    where: { id: changeId },
+    data: {
+      status: decision,
+      decisionNote: str(formData, "decisionNote") || null,
+      tasksUpdated: str(formData, "tasksUpdated") || null,
+      decidedById: user.id,
+      decidedAt: new Date(),
+    },
+  });
+
+  await recordAudit({
+    actorId: user.id,
+    action: decision === "APPROVED" ? "APPROVE" : "REJECT",
+    entityType: "ChangeRequest",
+    entityId: changeId,
+    clientId,
+    summary: `${decision === "APPROVED" ? "Approved" : "Rejected"} change request: ${existing.description}`,
+  });
+  revalidate(clientId);
 }
 
 // --- Steps 13–15: status lifecycle & closeout --------------------------------
