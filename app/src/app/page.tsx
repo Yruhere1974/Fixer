@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Badge } from "@/components/badge";
-import { getExceptions, getIncidentExceptions, getProviderExceptions, listClients } from "@/lib/queries";
-import { clientStatusLabel, consentTypeLabel, formatDate, incidentTypeLabel, serviceCategoryLabel } from "@/lib/labels";
+import { getExceptions, getIncidentExceptions, getPrivacyExceptions, getProviderExceptions, listClients } from "@/lib/queries";
+import { clientStatusLabel, consentTypeLabel, formatDate, incidentTypeLabel, privacyRequestTypeLabel, serviceCategoryLabel } from "@/lib/labels";
 import type { ClientStatus } from "@/generated/prisma/client";
 import { requireUser } from "@/lib/session";
-import { canCoordinate, canHandleIncidents, canManageDirectory } from "@/lib/access";
+import { canCoordinate, canHandleIncidents, canHandlePrivacy, canManageDirectory } from "@/lib/access";
 
 // Reads live data every request; must not be statically prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -20,11 +20,13 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const manageDirectory = canManageDirectory(user.role);
   const handleIncidents = canHandleIncidents(user.role);
-  const [clients, exceptions, providerExceptions, incidentExceptions] = await Promise.all([
+  const handlePrivacy = canHandlePrivacy(user.role);
+  const [clients, exceptions, providerExceptions, incidentExceptions, privacyOverdue] = await Promise.all([
     listClients(user),
     getExceptions(user),
     manageDirectory ? getProviderExceptions() : Promise.resolve({ pending: [], due: [] }),
     handleIncidents ? getIncidentExceptions() : Promise.resolve({ reviewDue: [], correctiveOverdue: [] }),
+    handlePrivacy ? getPrivacyExceptions() : Promise.resolve([]),
   ]);
   const providerAttention = [...providerExceptions.pending, ...providerExceptions.due];
   const incidentAttention = Array.from(
@@ -37,7 +39,8 @@ export default async function DashboardPage() {
     exceptions.expiring.length +
     exceptions.pendingChanges.length +
     providerAttention.length +
-    incidentAttention.length;
+    incidentAttention.length +
+    privacyOverdue.length;
 
   return (
     <div className="space-y-10">
@@ -135,6 +138,18 @@ export default async function DashboardPage() {
                 href: `/incidents/${i.id}`,
                 label: incidentTypeLabel[i.type],
                 meta: `48h review due ${formatDate(i.reviewDueAt)}`,
+              }))}
+            />
+          )}
+          {handlePrivacy && (
+            <ExceptionCard
+              title="Privacy requests overdue"
+              tone="red"
+              items={privacyOverdue.map((r) => ({
+                id: r.id,
+                href: `/privacy/${r.id}`,
+                label: privacyRequestTypeLabel[r.type],
+                meta: `${r.requesterName} · due ${formatDate(r.responseDueDate)}`,
               }))}
             />
           )}

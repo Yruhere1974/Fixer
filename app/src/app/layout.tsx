@@ -3,7 +3,7 @@ import { Manrope } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { currentUser } from "@/lib/session";
-import { canHandleIncidents, canReportIncident } from "@/lib/access";
+import { canHandleIncidents, canHandlePrivacy, canReportIncident } from "@/lib/access";
 import { logout } from "@/app/login/actions";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
@@ -54,6 +54,9 @@ export default async function RootLayout({
                 ) : canReportIncident(user.role) ? (
                   <Link href="/incidents/new" className="hover:text-primary">Report incident</Link>
                 ) : null}
+                {canHandlePrivacy(user.role) && (
+                  <Link href="/privacy" className="hover:text-primary">Privacy</Link>
+                )}
               </nav>
               <div className="flex items-center gap-4">
                 <span className="rounded-full bg-warning-container px-3 py-1 text-xs font-medium text-on-warning-container">

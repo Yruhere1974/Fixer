@@ -199,6 +199,22 @@ async function main() {
     },
   });
 
+  // --- Privacy request (§6.13): an access request, response overdue ---
+  await prisma.privacyRequest.deleteMany({ where: { requesterName: { startsWith: FICTIONAL_MARKER } } });
+  await prisma.privacyRequest.create({
+    data: {
+      type: "ACCESS",
+      status: "RECEIVED",
+      clientId: client.id,
+      requesterName: `${FICTIONAL_MARKER} Jordan Rivers`,
+      scope: "Access to all coordination notes and the current action plan.",
+      receivedAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
+      responseDueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // overdue -> exception
+      assignedToId: navigator.id,
+      createdById: navigator.id,
+    },
+  });
+
   // --- Prove the guard both ways (this is the slice-1 verification) ---
   console.log(`\nSeeded fictional client ${client.displayName} (${client.id})\n`);
 

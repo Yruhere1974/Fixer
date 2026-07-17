@@ -46,3 +46,11 @@ export function canHandleIncidents(role: Role): boolean {
 export function canReportIncident(role: Role): boolean {
   return COORDINATE.includes(role) || HANDLE_INCIDENTS.includes(role);
 }
+
+// Client-rights requests are a privacy-lead function (§5, §6.13).
+const HANDLE_PRIVACY: Role[] = ["FOUNDER", "PRIVACY_LEAD"];
+
+/** May this role handle privacy access/correction/complaint requests? Founder + privacy lead. */
+export function canHandlePrivacy(role: Role): boolean {
+  return HANDLE_PRIVACY.includes(role);
+}

@@ -521,10 +521,12 @@ flowchart TD
 **Cross-cutting controls in place** (support §5, §14, §17.14–17.15): individual accounts +
 role-based access with assignment scoping (auth, ADR 0003); an attributable **audit trail** of every
 mutation and disclosure; the **incident / complaint register** (§6.12, §17.5 — restricted access, 48-hour
-review clock, corrective-action verification required before closure); and the **daily exception view**
-(overdue, awaiting approval, blocked, expiring permissions, change requests pending, providers to
-verify/review, **incidents to review/correct**). **Not yet built:** invoicing, privacy
-access/correction requests, and a destruction/handoff-export lifecycle.
+review clock, corrective-action verification required before closure); the **privacy-request register**
+(§6.13 — access/correction/withdrawal/complaint/export, identity verification required before completion,
+response-due tracking); and the **daily exception view** (overdue, awaiting approval, blocked, expiring
+permissions, change requests pending, providers to verify/review, incidents to review/correct, **privacy
+requests overdue**). **Not yet built:** invoicing/expenses (§6.11), and a destruction/handoff-export
+lifecycle.
 
 **Summary:** every one of the 15 journey steps is now at least partially operable through the UI, and
 **12 of 15 are fully supported** — a navigator can create an engagement, record the agreement and

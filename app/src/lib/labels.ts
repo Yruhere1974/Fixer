@@ -11,6 +11,8 @@ import type {
   IncidentType,
   InfoCategory,
   Priority,
+  PrivacyRequestStatus,
+  PrivacyRequestType,
   ProviderStatus,
   ScreenOutcome,
   ServiceCategory,
@@ -125,6 +127,21 @@ export const incidentStatusLabel: Record<IncidentStatus, string> = {
   UNDER_REVIEW: "Under review",
   CORRECTIVE_ACTION: "Corrective action",
   CLOSED: "Closed",
+};
+
+export const privacyRequestTypeLabel: Record<PrivacyRequestType, string> = {
+  ACCESS: "Access",
+  CORRECTION: "Correction",
+  WITHDRAW_CONSENT: "Withdraw consent",
+  COMPLAINT: "Complaint",
+  EXPORT: "Export",
+};
+
+export const privacyRequestStatusLabel: Record<PrivacyRequestStatus, string> = {
+  RECEIVED: "Received",
+  IN_PROGRESS: "In progress",
+  COMPLETED: "Completed",
+  ESCALATED: "Escalated",
 };
 
 export const serviceCategoryLabel: Record<ServiceCategory, string> = {

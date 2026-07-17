@@ -21,6 +21,21 @@ standards together as the project's source of truth.
   - **Verification:** Reviewed the imported file list, checked for oversized files,
     and scanned for obvious credential/private-key patterns before commit.
   - **Version:** Import commit on `main`.
+- **2026-07-16 — Privacy-request register (§6.13):** Built the client-rights subsystem.
+  `PrivacyRequest` model (type: access/correction/withdraw-consent/complaint/export;
+  requester + identity verification; received + policy `responseDueDate` (default +30d);
+  scope; assigned owner; records searched; outcome; reason/advice; client communication;
+  completedAt) + enums + migration. Pages: `/privacy` (list), `/privacy/new` (log),
+  `/privacy/[id]` (verify identity → handle → complete). Restricted to `canHandlePrivacy`
+  (Founder + Privacy Lead). Enforced: **completion blocked until the requester's identity
+  is verified** (§8.5); response-due tracking surfaces overdue requests in the exception
+  view ("Privacy requests overdue"). Nav link; seeded an overdue access request; audit on
+  every action. Updated §17.4.1 cross-cutting controls (privacy register now in place).
+  - **Verification:** Playwright (`scripts/privacy-e2e.mjs`) — seeded overdue request lists;
+    log → (complete disabled) → verify identity → handle → complete; the complete button
+    was correctly disabled before verification. typecheck + lint + build clean; containers
+    rebuilt.
+  - **Version:** Committed on `develop`. Remaining §6 gap: invoicing/expenses (§6.11).
 - **2026-07-16 — Incident / complaint register (§6.12, §17.5):** Built the restricted
   problem-intake subsystem. `IncidentRecord` model (type, severity, status, discovered/
   occurred, reportedBy, people/info affected, description, immediate action, notifications,

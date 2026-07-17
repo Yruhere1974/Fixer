@@ -132,6 +132,35 @@ export async function getProvider(id: string) {
   });
 }
 
+// --- Privacy requests (§6.13) ------------------------------------------------
+
+export async function listPrivacyRequests() {
+  return prisma.privacyRequest.findMany({
+    orderBy: [{ status: "asc" }, { receivedAt: "desc" }],
+    include: { client: { select: { displayName: true } }, assignedTo: { select: { name: true } } },
+  });
+}
+
+export async function getPrivacyRequest(id: string) {
+  return prisma.privacyRequest.findUnique({
+    where: { id },
+    include: {
+      client: { select: { id: true, displayName: true } },
+      assignedTo: { select: { name: true } },
+      createdBy: { select: { name: true } },
+    },
+  });
+}
+
+/** Open requests whose policy response date has passed (§6.13). */
+export async function getPrivacyExceptions(now: Date = new Date()) {
+  return prisma.privacyRequest.findMany({
+    where: { status: { notIn: ["COMPLETED"] }, responseDueDate: { lte: now } },
+    orderBy: { responseDueDate: "asc" },
+    include: { client: { select: { displayName: true } } },
+  });
+}
+
 // --- Incident log (§6.12, §17.5) ---------------------------------------------
 
 export async function listIncidents() {
